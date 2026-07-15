@@ -1,0 +1,11 @@
+node_modules/
+frontend/node_modules/
+backend/node_modules/
+backend/firebase-service-account.json
+.env
+frontend/.angular/
+frontend/dist/
+backend/dist/
+backend/.npm/
+.firebase/
+*.log
