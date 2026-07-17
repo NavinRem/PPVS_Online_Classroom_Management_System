@@ -20,4 +20,8 @@ export class CreateUserDto {
   @IsString()
   @IsOptional()
   fcmToken?: string;
+
+  @IsString()
+  @IsOptional()
+  branchId?: string;
 }

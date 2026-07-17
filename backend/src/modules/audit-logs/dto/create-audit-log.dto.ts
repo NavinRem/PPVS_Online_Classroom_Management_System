@@ -24,4 +24,8 @@ export class CreateAuditLogDto {
   @IsObject()
   @IsOptional()
   details?: Record<string, any>;
+
+  @IsString()
+  @IsOptional()
+  branchId?: string;
 }

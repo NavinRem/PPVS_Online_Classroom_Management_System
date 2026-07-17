@@ -13,6 +13,7 @@ import { AssessmentsModule } from './modules/assessments/assessments.module';
 import { AttendanceModule } from './modules/attendance/attendance.module';
 import { SessionsModule } from './modules/sessions/sessions.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
+import { BranchesModule } from './modules/branches/branches.module';
 
 @Module({
   imports: [
@@ -30,7 +31,9 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
     AttendanceModule,
     SessionsModule,
     NotificationsModule,
+    BranchesModule,
   ],
+
   controllers: [],
   providers: [],
 })

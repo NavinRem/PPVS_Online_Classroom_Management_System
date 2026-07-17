@@ -33,4 +33,8 @@ export class CreateTeacherDto {
   @IsOptional()
   @IsIn(['male', 'female', 'other'])
   gender?: 'male' | 'female' | 'other';
+
+  @IsString()
+  @IsOptional()
+  branchId?: string;
 }

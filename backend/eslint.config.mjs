@@ -19,7 +19,9 @@ export default tseslint.config(
       },
       sourceType: 'commonjs',
       parserOptions: {
-        projectService: true,
+        projectService: {
+          allowDefaultProject: ['test/mocks/*.js', '*.mjs', '*.js'],
+        },
         tsconfigRootDir: import.meta.dirname,
       },
     },

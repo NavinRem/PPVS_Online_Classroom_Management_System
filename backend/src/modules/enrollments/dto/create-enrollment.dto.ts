@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional } from 'class-validator';
 
 export class CreateEnrollmentDto {
   @IsString()
@@ -12,4 +12,8 @@ export class CreateEnrollmentDto {
   @IsString()
   @IsNotEmpty()
   parentId!: string; // Good to include so parents can easily query their children's schedules
+
+  @IsString()
+  @IsOptional()
+  branchId?: string;
 }

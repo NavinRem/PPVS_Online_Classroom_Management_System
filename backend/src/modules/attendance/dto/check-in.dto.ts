@@ -35,4 +35,8 @@ export class BatchCheckInDto {
   @ValidateNested({ each: true })
   @Type(() => StudentCheckInRecordDto)
   records!: StudentCheckInRecordDto[];
+
+  @IsString()
+  @IsOptional()
+  branchId?: string;
 }

@@ -34,6 +34,10 @@ export class CreateInvoiceDto {
   @IsString()
   @IsOptional()
   dueDate?: string;
+
+  @IsString()
+  @IsOptional()
+  branchId?: string;
 }
 
 export class CheckoutDto {

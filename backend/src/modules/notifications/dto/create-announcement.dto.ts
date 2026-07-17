@@ -23,6 +23,10 @@ export class CreateAnnouncementDto {
   @IsOptional()
   @IsIn(['all', 'parent', 'student'])
   targetRole?: 'all' | 'parent' | 'student' = 'all';
+
+  @IsString()
+  @IsOptional()
+  branchId?: string;
 }
 
 export class SendNotificationDto {
@@ -45,4 +49,8 @@ export class SendNotificationDto {
   @IsObject()
   @IsOptional()
   metadata?: Record<string, any>;
+
+  @IsString()
+  @IsOptional()
+  branchId?: string;
 }

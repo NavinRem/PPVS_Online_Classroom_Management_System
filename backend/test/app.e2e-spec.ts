@@ -4,7 +4,7 @@ import request from 'supertest';
 import { App } from 'supertest/types';
 import { AppModule } from './../src/app.module';
 
-describe('AppController (e2e)', () => {
+describe('AppModule (e2e)', () => {
   let app: INestApplication<App>;
 
   beforeEach(async () => {
@@ -16,11 +16,31 @@ describe('AppController (e2e)', () => {
     await app.init();
   });
 
-  it('/ (GET)', () => {
+  it('/classes (GET) - unauthenticated request should return 401 Unauthorized', () => {
     return request(app.getHttpServer())
-      .get('/')
-      .expect(200)
-      .expect('Hello World!');
+      .get('/classes')
+      .expect(401)
+      .expect((res) => {
+        expect(res.body.message).toContain('Unauthorized');
+      });
+  });
+
+  it('/users/me (GET) - unauthenticated request should return 401 Unauthorized', () => {
+    return request(app.getHttpServer())
+      .get('/users/me')
+      .expect(401)
+      .expect((res) => {
+        expect(res.body.message).toContain('Unauthorized');
+      });
+  });
+
+  it('/assessments (GET) - unauthenticated request should return 401 Unauthorized', () => {
+    return request(app.getHttpServer())
+      .get('/assessments')
+      .expect(401)
+      .expect((res) => {
+        expect(res.body.message).toContain('Unauthorized');
+      });
   });
 
   afterEach(async () => {

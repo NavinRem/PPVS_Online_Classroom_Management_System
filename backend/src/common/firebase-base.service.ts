@@ -3,6 +3,10 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { FirebaseService } from '../config/firebase/firebase.service';
+import {
+  verifyTeacherClassOwnershipUtil,
+  verifyStudentAccessUtil,
+} from './rbac-verification.util';
 
 export interface AuditContext {
   uid: string;
@@ -15,7 +19,7 @@ export type FirestorePayload = Record<string, unknown>;
 export abstract class FirestoreBaseService<T> {
   protected abstract collectionName: string;
 
-  constructor(protected readonly firebase: FirebaseService) {}
+  constructor(public readonly firebase: FirebaseService) {}
 
   protected formatCreatePayload(
     data: T,
@@ -72,11 +76,15 @@ export abstract class FirestoreBaseService<T> {
     }
   }
 
-  async findAll() {
+  async findAll(branchId?: string) {
     try {
-      const snapshot = await this.firebase.firestore
-        .collection(this.collectionName)
-        .get();
+      let query: FirebaseFirestore.Query = this.firebase.firestore.collection(
+        this.collectionName,
+      );
+      if (branchId) {
+        query = query.where('branchId', '==', branchId);
+      }
+      const snapshot = await query.get();
       return snapshot.docs.map((doc) =>
         this.formatResponse(doc.id, doc.data() as Record<string, unknown>),
       );
@@ -128,5 +136,39 @@ export abstract class FirestoreBaseService<T> {
       console.error(`🔥 FIRESTORE ERROR (${this.collectionName}):`, error);
       throw new InternalServerErrorException('Failed to delete record');
     }
+  }
+
+  async findByUid(uid: string) {
+    return this.findOne(uid);
+  }
+
+  async findByBranch(branchId: string) {
+    return this.findAll(branchId);
+  }
+
+  protected async verifyTeacherClassOwnership(
+    classId: string,
+    requesterUid?: string,
+    requesterRole?: string,
+  ): Promise<void> {
+    return verifyTeacherClassOwnershipUtil(
+      this.firebase.firestore,
+      classId,
+      requesterUid,
+      requesterRole,
+    );
+  }
+
+  protected async verifyStudentAccess(
+    studentId: string,
+    requesterUid?: string,
+    requesterRole?: string,
+  ): Promise<void> {
+    return verifyStudentAccessUtil(
+      this.firebase.firestore,
+      studentId,
+      requesterUid,
+      requesterRole,
+    );
   }
 }

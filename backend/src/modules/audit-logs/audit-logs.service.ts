@@ -31,7 +31,7 @@ export class AuditLogsService extends FirestoreBaseService<CreateAuditLogDto> {
     }
   }
 
-  async findByEntity(entity: string, entityId?: string) {
+  async findByEntity(entity: string, entityId?: string, branchId?: string) {
     try {
       let query: FirebaseFirestore.Query = this.firebase.firestore.collection(
         this.collectionName,
@@ -42,7 +42,11 @@ export class AuditLogsService extends FirestoreBaseService<CreateAuditLogDto> {
       if (entityId) {
         query = query.where('entityId', '==', entityId);
       }
+      if (branchId) {
+        query = query.where('branchId', '==', branchId);
+      }
       const snapshot = await query.get();
+
       return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
     } catch (error) {
       console.error(

@@ -59,8 +59,14 @@ Run the backend development server:
 # Watch mode
 npm run start:dev
 
-# Build check
+# Production build & start
 npm run build
+npm run start:prod
+```
+
+> [!NOTE]
+> **Interactive API Documentation (`Swagger UI`)**
+> Once the development server is running, access interactive OpenAPI documentation at **[http://localhost:3000/api-docs](http://localhost:3000/api-docs)** to inspect and test all endpoints directly in your browser. For a complete guide on how Swagger UI works and how to authenticate using our `@CurrentUser()` decorator, see **[`backend/docs/API_SWAGGER_AND_RBAC_GUIDE.md`](file:///home/sonavin/Code/PPVS_Online_Classroom_Management_System/backend/docs/API_SWAGGER_AND_RBAC_GUIDE.md)**.
 
 # Code quality check
 npm run lint
@@ -70,7 +76,7 @@ npm run lint
 ```bash
 cd ../frontend
 npm install
-npm run dev
+npm start
 ```
 
 ---

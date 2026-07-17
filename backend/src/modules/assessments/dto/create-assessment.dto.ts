@@ -27,6 +27,10 @@ export class CreateAssessmentDto {
   @IsString()
   @IsOptional()
   dueDate?: string;
+
+  @IsString()
+  @IsOptional()
+  branchId?: string;
 }
 
 export class RecordGradeDto {
@@ -45,4 +49,8 @@ export class RecordGradeDto {
   @IsString()
   @IsOptional()
   comments?: string;
+
+  @IsString()
+  @IsOptional()
+  branchId?: string;
 }

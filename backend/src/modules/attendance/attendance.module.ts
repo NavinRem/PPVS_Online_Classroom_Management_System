@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { AttendanceController } from './attendance.controller';
 import { AttendanceService } from './attendance.service';
 import { FirebaseModule } from '../../config/firebase/firebase.module';
@@ -7,7 +7,12 @@ import { StudentsModule } from '../students/students.module';
 import { AuditLogsModule } from '../audit-logs/audit-logs.module';
 
 @Module({
-  imports: [FirebaseModule, AuthModule, StudentsModule, AuditLogsModule],
+  imports: [
+    FirebaseModule,
+    AuthModule,
+    forwardRef(() => StudentsModule),
+    AuditLogsModule,
+  ],
   controllers: [AttendanceController],
   providers: [AttendanceService],
   exports: [AttendanceService],

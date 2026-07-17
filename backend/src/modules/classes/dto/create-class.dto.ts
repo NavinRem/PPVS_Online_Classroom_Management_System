@@ -34,13 +34,18 @@ export class CreateClassDto {
 
   @IsNumber()
   @Min(0)
-  price: number = 0;
+  @IsOptional()
+  price?: number = 0;
 
   @IsString()
   @IsOptional()
-  currency: string = 'KHR';
+  currency?: string = 'KHR';
 
   @IsString()
   @IsOptional()
   meetingUrl?: string;
+
+  @IsString()
+  @IsOptional()
+  branchId?: string;
 }

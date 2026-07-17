@@ -3,6 +3,8 @@ import {
   InternalServerErrorException,
   ForbiddenException,
   NotFoundException,
+  Inject,
+  forwardRef,
 } from '@nestjs/common';
 import { FirestoreBaseService } from '../../common/firebase-base.service';
 import {
@@ -19,6 +21,7 @@ export class AssessmentsService extends FirestoreBaseService<CreateAssessmentDto
 
   constructor(
     firebase: FirebaseService,
+    @Inject(forwardRef(() => StudentsService))
     private readonly studentsService: StudentsService,
     private readonly auditLogsService: AuditLogsService,
   ) {
@@ -63,7 +66,18 @@ export class AssessmentsService extends FirestoreBaseService<CreateAssessmentDto
     }
   }
 
-  async getClassAssessments(classId: string) {
+  async getClassAssessments(
+    classId: string,
+    requesterUid?: string,
+    requesterRole?: string,
+  ) {
+    if (requesterUid && requesterRole) {
+      await this.verifyTeacherClassOwnership(
+        classId,
+        requesterUid,
+        requesterRole,
+      );
+    }
     try {
       const snapshot = await this.firebase.firestore
         .collection(this.collectionName)
@@ -72,6 +86,11 @@ export class AssessmentsService extends FirestoreBaseService<CreateAssessmentDto
 
       return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
     } catch (error) {
+      if (
+        error instanceof ForbiddenException ||
+        error instanceof NotFoundException
+      )
+        throw error;
       console.error(
         '🔥 FIRESTORE ERROR (AssessmentsService getClassAssessments):',
         error,
@@ -88,17 +107,7 @@ export class AssessmentsService extends FirestoreBaseService<CreateAssessmentDto
     requesterRole: string,
   ) {
     // Ownership Verification
-    if (requesterRole !== 'admin' && requesterRole !== 'teacher') {
-      if (requesterUid !== studentId) {
-        // Check if requester is the parent of this student
-        const student = (await this.studentsService.findOne(studentId)) as any;
-        if (!student || student.parentId !== requesterUid) {
-          throw new ForbiddenException(
-            'Access Denied: You can only view academic performance for yourself or your own children.',
-          );
-        }
-      }
-    }
+    await this.verifyStudentAccess(studentId, requesterUid, requesterRole);
 
     try {
       const gradesSnap = await this.firebase.firestore
@@ -168,6 +177,243 @@ export class AssessmentsService extends FirestoreBaseService<CreateAssessmentDto
       );
       throw new InternalServerErrorException(
         'Failed to calculate student performance summary',
+      );
+    }
+  }
+
+  async getStudentMonthlyReport(
+    studentId: string,
+    month?: string,
+    requesterUid?: string,
+    requesterRole?: string,
+  ) {
+    const targetMonth = month || new Date().toISOString().slice(0, 7);
+    await this.verifyStudentAccess(studentId, requesterUid, requesterRole);
+
+    try {
+      const gradesSnap = await this.firebase.firestore
+        .collection('student_grades')
+        .where('studentId', '==', studentId)
+        .get();
+
+      const grades = gradesSnap.docs.map((doc) => ({
+        id: doc.id,
+        ...(doc.data() as any),
+      }));
+
+      let totalEarned = 0;
+      let totalMax = 0;
+      const monthlyGrades: any[] = [];
+      const remarksList: string[] = [];
+      let primaryClassId: string | null = null;
+
+      for (const grade of grades) {
+        const assessmentDoc = await this.firebase.firestore
+          .collection(this.collectionName)
+          .doc(grade.assessmentId)
+          .get();
+
+        if (assessmentDoc.exists) {
+          const assessment = assessmentDoc.data() as any;
+          if (!primaryClassId && assessment.classId) {
+            primaryClassId = String(assessment.classId);
+          }
+          const gradeDate: string = String(
+            grade.updatedAt || grade.createdAt || assessment.dueDate || '',
+          );
+          const assessDueDate: string = String(assessment.dueDate || '');
+          if (
+            gradeDate.startsWith(targetMonth) ||
+            (assessDueDate && assessDueDate.startsWith(targetMonth))
+          ) {
+            const scoreNum = Number(grade.score || 0);
+            const maxNum = Number(assessment.maxScore || 100);
+            totalEarned += scoreNum;
+            totalMax += maxNum;
+            if (grade.comments) remarksList.push(String(grade.comments));
+
+            monthlyGrades.push({
+              assessmentId: assessmentDoc.id,
+              title: String(assessment.title || ''),
+              type: String(assessment.type || ''),
+              score: scoreNum,
+              maxScore: maxNum,
+              comments: String(grade.comments || ''),
+              recordedAt: gradeDate,
+            });
+          }
+        }
+      }
+
+      const monthlyPercentage =
+        totalMax > 0 ? Math.round((totalEarned / totalMax) * 100) : 0;
+      let evaluationBand = 'Needs Improvement';
+      if (monthlyPercentage >= 90) evaluationBand = 'Excellent';
+      else if (monthlyPercentage >= 80) evaluationBand = 'Good';
+      else if (monthlyPercentage >= 70) evaluationBand = 'Satisfactory';
+
+      let classRanking = 'N/A';
+      if (primaryClassId && totalMax > 0) {
+        const enrollmentsSnap = await this.firebase.firestore
+          .collection('enrollments')
+          .where('classId', '==', primaryClassId)
+          .get();
+        const classmateScores: { studentId: string; percentage: number }[] = [];
+
+        for (const enrollDoc of enrollmentsSnap.docs) {
+          const classmateId = (enrollDoc.data() as { studentId: string })
+            .studentId;
+          const cmGradesSnap = await this.firebase.firestore
+            .collection('student_grades')
+            .where('studentId', '==', classmateId)
+            .get();
+          let cmEarned = 0;
+          let cmMax = 0;
+          for (const cmGradeDoc of cmGradesSnap.docs) {
+            const cmGrade = cmGradeDoc.data() as any;
+            const cmAssessDoc = await this.firebase.firestore
+              .collection(this.collectionName)
+              .doc(String(cmGrade.assessmentId))
+              .get();
+            if (cmAssessDoc.exists) {
+              const cmAssess = cmAssessDoc.data() as any;
+              const cmDate: string = String(
+                cmGrade.updatedAt ||
+                  cmGrade.createdAt ||
+                  cmAssess.dueDate ||
+                  '',
+              );
+              const cmAssessDueDate: string = String(cmAssess.dueDate || '');
+              if (
+                cmDate.startsWith(targetMonth) ||
+                (cmAssessDueDate && cmAssessDueDate.startsWith(targetMonth))
+              ) {
+                cmEarned += Number(cmGrade.score || 0);
+                cmMax += Number(cmAssess.maxScore || 100);
+              }
+            }
+          }
+          const cmPercentage =
+            cmMax > 0 ? Math.round((cmEarned / cmMax) * 100) : 0;
+          classmateScores.push({
+            studentId: classmateId,
+            percentage: cmPercentage,
+          });
+        }
+
+        classmateScores.sort((a, b) => b.percentage - a.percentage);
+        const rankIdx = classmateScores.findIndex(
+          (cs) => cs.studentId === studentId,
+        );
+        if (rankIdx !== -1) {
+          classRanking = `${rankIdx + 1} out of ${classmateScores.length} students`;
+        }
+      }
+
+      return {
+        studentId,
+        month: targetMonth,
+        totalAssessments: monthlyGrades.length,
+        monthlyPercentage: `${monthlyPercentage}%`,
+        evaluationBand,
+        classRanking,
+        remarks:
+          remarksList.length > 0
+            ? remarksList.join('; ')
+            : 'No remarks for this month.',
+        detailedGrades: monthlyGrades,
+      };
+    } catch (error) {
+      if (
+        error instanceof ForbiddenException ||
+        error instanceof NotFoundException
+      )
+        throw error;
+      console.error(
+        '🔥 FIRESTORE ERROR (AssessmentsService getStudentMonthlyReport):',
+        error,
+      );
+      throw new InternalServerErrorException(
+        'Failed to generate student monthly report',
+      );
+    }
+  }
+
+  async getClassMonthlySummary(
+    classId: string,
+    month?: string,
+    requesterUid?: string,
+    requesterRole?: string,
+  ) {
+    const targetMonth = month || new Date().toISOString().slice(0, 7);
+    if (requesterUid && requesterRole) {
+      await this.verifyTeacherClassOwnership(
+        classId,
+        requesterUid,
+        requesterRole,
+      );
+    }
+
+    try {
+      const enrollmentsSnap = await this.firebase.firestore
+        .collection('enrollments')
+        .where('classId', '==', classId)
+        .get();
+
+      const leaderboard: any[] = [];
+      for (const enrollDoc of enrollmentsSnap.docs) {
+        const enrollment = enrollDoc.data() as { studentId: string };
+        const studentDoc = await this.firebase.firestore
+          .collection('students')
+          .doc(enrollment.studentId)
+          .get();
+        const studentName = studentDoc.exists
+          ? `${(studentDoc.data() as any).firstName || ''} ${(studentDoc.data() as any).lastName || ''}`.trim()
+          : 'Unknown Student';
+
+        const monthlyReport = await this.getStudentMonthlyReport(
+          enrollment.studentId,
+          targetMonth,
+          'system',
+          'admin',
+        );
+
+        leaderboard.push({
+          studentId: enrollment.studentId,
+          studentName,
+          monthlyPercentage: monthlyReport.monthlyPercentage,
+          rawPercentage:
+            Number(monthlyReport.monthlyPercentage.replace('%', '')) || 0,
+          evaluationBand: monthlyReport.evaluationBand,
+          totalAssessments: monthlyReport.totalAssessments,
+          remarks: monthlyReport.remarks,
+        });
+      }
+
+      leaderboard.sort((a, b) => b.rawPercentage - a.rawPercentage);
+      const rankedLeaderboard = leaderboard.map((item, idx) => ({
+        rank: idx + 1,
+        ...item,
+      }));
+
+      return {
+        classId,
+        month: targetMonth,
+        totalStudents: rankedLeaderboard.length,
+        leaderboard: rankedLeaderboard,
+      };
+    } catch (error) {
+      if (
+        error instanceof ForbiddenException ||
+        error instanceof NotFoundException
+      )
+        throw error;
+      console.error(
+        '🔥 FIRESTORE ERROR (AssessmentsService getClassMonthlySummary):',
+        error,
+      );
+      throw new InternalServerErrorException(
+        'Failed to generate class monthly summary',
       );
     }
   }

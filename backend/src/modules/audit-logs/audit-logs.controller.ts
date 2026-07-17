@@ -11,7 +11,8 @@ export class AuditLogsController {
   getLogs(
     @Query('entity') entity?: string,
     @Query('entityId') entityId?: string,
+    @Query('branchId') branchId?: string,
   ) {
-    return this.auditLogsService.findByEntity(entity || '', entityId);
+    return this.auditLogsService.findByEntity(entity || '', entityId, branchId);
   }
 }

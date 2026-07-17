@@ -35,6 +35,10 @@ export class CreateSessionDto {
   @IsString()
   @IsOptional()
   topic?: string;
+
+  @IsString()
+  @IsOptional()
+  branchId?: string;
 }
 
 export class CreateMaterialDto {
@@ -57,4 +61,8 @@ export class CreateMaterialDto {
   @IsString()
   @IsIn(['pdf', 'video', 'link'])
   fileType!: 'pdf' | 'video' | 'link';
+
+  @IsString()
+  @IsOptional()
+  branchId?: string;
 }
