@@ -1,0 +1,146 @@
+<div class="attendance-container">
+  <div class="page-header">
+    <div class="header-content">
+      <a routerLink="/teacher/dashboard" class="back-link"> <span>⬅️</span> Dashboard </a>
+      <h2>Classroom Attendance Check-In</h2>
+      <p>Select attendance status for each student in the roster.</p>
+    </div>
+
+    <div class="header-controls">
+      <div class="control-group">
+        <label for="classSelect">Class:</label>
+        <select
+          id="classSelect"
+          [ngModel]="selectedClassId()"
+          (ngModelChange)="selectClass($event)"
+          class="class-select"
+        >
+          @for (cls of classes(); track cls.id) {
+            <option [value]="cls.id">{{ cls.name }} ({{ cls.subject }})</option>
+          }
+        </select>
+      </div>
+
+      <div class="control-group">
+        <label for="dateSelect">Date:</label>
+        <input
+          type="date"
+          id="dateSelect"
+          [ngModel]="attendanceDate()"
+          (ngModelChange)="attendanceDate.set($event)"
+          class="date-select"
+        />
+      </div>
+    </div>
+  </div>
+
+  @if (statusMessage()) {
+    <div
+      class="status-alert"
+      [class.success]="isStatusSuccess()"
+      [class.error]="!isStatusSuccess()"
+      role="alert"
+    >
+      <span>{{ statusMessage() }}</span>
+    </div>
+  }
+
+  <div class="quick-actions-bar">
+    <div class="summary-counts">
+      <span class="count-pill status-present">
+        ✅ Present: <strong>{{ getCountForStatus('present') }}</strong>
+      </span>
+      <span class="count-pill status-homeworked">
+        📚 Homeworked: <strong>{{ getCountForStatus('homeworked') }}</strong>
+      </span>
+      <span class="count-pill status-permission">
+        📝 Permission: <strong>{{ getCountForStatus('permission') }}</strong>
+      </span>
+      <span class="count-pill status-absent">
+        ❌ Absent: <strong>{{ getCountForStatus('absent') }}</strong>
+      </span>
+    </div>
+
+    <div class="batch-buttons">
+      <span>Quick Mark All:</span>
+      @for (s of statuses; track s.value) {
+        <button
+          type="button"
+          class="quick-btn"
+          [class]="s.colorClass"
+          (click)="setAllStatuses(s.value)"
+        >
+          {{ s.icon }} {{ s.label }}
+        </button>
+      }
+    </div>
+  </div>
+
+  @if (isLoading()) {
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <p>Loading student roster...</p>
+    </div>
+  } @else if (students().length === 0) {
+    <div class="empty-state">
+      <span>📭</span>
+      <h4>No Students Enrolled</h4>
+      <p>There are no students currently enrolled in this class roster.</p>
+    </div>
+  } @else {
+    <div class="roster-list">
+      @for (student of students(); track student.id; let i = $index) {
+        <div class="student-card">
+          <div class="student-info">
+            <span class="student-number">#{{ i + 1 }}</span>
+            <div class="student-names">
+              <h4 class="name-kh">{{ student.nameKhmer || student.name }}</h4>
+              <span class="name-en">{{ student.name }} • {{ student.gender }}</span>
+            </div>
+          </div>
+
+          <div
+            class="status-matrix"
+            role="radiogroup"
+            [attr.aria-label]="'Attendance for ' + student.name"
+          >
+            @for (s of statuses; track s.value) {
+              <button
+                type="button"
+                class="status-btn"
+                [class]="s.colorClass"
+                [class.active]="studentStatuses()[student.id] === s.value"
+                (click)="setStatus(student.id, s.value)"
+                [title]="s.label"
+              >
+                <span class="icon">{{ s.icon }}</span>
+                <span class="label">{{ s.label }}</span>
+              </button>
+            }
+          </div>
+        </div>
+      }
+    </div>
+
+    <div class="submit-footer">
+      <div class="footer-info">
+        <span
+          >Ready to submit <strong>{{ students().length }}</strong> student attendance records for
+          <strong>{{ attendanceDate() }}</strong></span
+        >
+      </div>
+      <button
+        type="button"
+        class="submit-btn"
+        [disabled]="isSubmitting()"
+        (click)="submitAttendance()"
+      >
+        @if (isSubmitting()) {
+          <span class="spinner-small"></span> Submitting...
+        } @else {
+          <span>Save Check-In Records</span>
+        }
+      </button>
+    </div>
+  }
+</div>

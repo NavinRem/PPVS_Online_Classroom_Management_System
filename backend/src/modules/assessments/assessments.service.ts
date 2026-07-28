@@ -35,7 +35,6 @@ export class AssessmentsService extends FirestoreBaseService<CreateAssessmentDto
   async recordGrade(recordDto: RecordGradeDto, auditContext?: any) {
     try {
       const gradesRef = this.firebase.firestore.collection('student_grades');
-      // Check existing grade record
       const existing = await gradesRef
         .where('assessmentId', '==', recordDto.assessmentId)
         .where('studentId', '==', recordDto.studentId)
@@ -106,7 +105,6 @@ export class AssessmentsService extends FirestoreBaseService<CreateAssessmentDto
     requesterUid: string,
     requesterRole: string,
   ) {
-    // Ownership Verification
     await this.verifyStudentAccess(studentId, requesterUid, requesterRole);
 
     try {

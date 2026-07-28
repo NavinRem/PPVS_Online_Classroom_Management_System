@@ -1,0 +1,103 @@
+/* ==========================================================================
+   PPVS Design System & Centralized Tokens (_variables.scss)
+   ==========================================================================
+   All color palettes, typography scales, spacing tokens, and border radii
+   must be referenced from here instead of hardcoding values in components.
+   ========================================================================== */
+
+// 1. Color Palette (Dark Theme / Glassmorphism Focus)
+$color-bg-app: #0f172a; // Deep slate main background
+$color-bg-card: rgba(30, 41, 59, 0.65); // Glass card background
+$color-bg-card-hover: rgba(30, 41, 59, 0.85);
+$color-bg-input: #0f172a;
+
+// Accent & Primary Brand Colors
+$color-primary: #6366f1; // Indigo primary
+$color-primary-hover: #4f46e5;
+$color-primary-light: #818cf8;
+$color-primary-subtle: rgba(99, 102, 241, 0.18);
+
+$color-secondary: #06b6d4; // Cyan accent
+$color-secondary-subtle: rgba(6, 182, 212, 0.15);
+
+// Text Colors
+$color-text-main: #ffffff;
+$color-text-muted: #94a3b8;
+$color-text-subtle: #64748b;
+
+// Border & Glass Tokens
+$color-border-glass: rgba(255, 255, 255, 0.08);
+$color-border-glass-hover: rgba(255, 255, 255, 0.2);
+$color-border-input: rgba(255, 255, 255, 0.15);
+
+// 2. Attendance & Assessment Status Colors
+$status-present-bg: rgba(16, 185, 129, 0.15);
+$status-present-border: rgba(16, 185, 129, 0.35);
+$status-present-text: #34d399;
+$status-present-grad: linear-gradient(135deg, #10b981 0%, #059669 100%);
+
+$status-homeworked-bg: rgba(99, 102, 241, 0.18);
+$status-homeworked-border: rgba(99, 102, 241, 0.35);
+$status-homeworked-text: #a5b4fc;
+$status-homeworked-grad: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+
+$status-permission-bg: rgba(245, 158, 11, 0.15);
+$status-permission-border: rgba(245, 158, 11, 0.35);
+$status-permission-text: #fbbf24;
+$status-permission-grad: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+
+$status-absent-bg: rgba(239, 68, 68, 0.15);
+$status-absent-border: rgba(239, 68, 68, 0.35);
+$status-absent-text: #f87171;
+$status-absent-grad: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+
+// 3. Typography Scales
+$font-sans:
+  'Nunito',
+  'Inter',
+  system-ui,
+  -apple-system,
+  sans-serif;
+$font-khmer: 'Kantumruy Pro', 'Nunito', 'Inter', system-ui, sans-serif;
+
+$size-xs: 0.75rem; // 12px
+$size-sm: 0.85rem; // 13.6px
+$size-md: 0.95rem; // 15.2px
+$size-lg: 1.15rem; // 18.4px
+$size-xl: 1.4rem; // 22.4px
+$size-xxl: 1.75rem; // 28px
+
+$weight-regular: 400;
+$weight-medium: 500;
+$weight-semibold: 600;
+$weight-bold: 700;
+
+// 4. Spacing Scale
+$space-xs: 0.35rem; // ~6px
+$space-sm: 0.65rem; // ~10px
+$space-md: 1rem; // ~16px
+$space-lg: 1.5rem; // ~24px
+$space-xl: 2rem; // ~32px
+
+// 5. Border Radii
+$radius-sm: 8px;
+$radius-md: 12px;
+$radius-card: 16px;
+$radius-lg: 20px;
+$radius-pill: 9999px;
+
+// 6. Box Shadows
+$shadow-card: 0 8px 25px rgba(0, 0, 0, 0.35);
+$shadow-button: 0 4px 15px rgba(99, 102, 241, 0.4);
+$shadow-header: 0 -10px 30px rgba(0, 0, 0, 0.5);
+
+// 7. Lemoney / Yellow Visual Theme & Light Accents (Auth & Clean Cards)
+$color-yellow-main: #fee133; // Vibrant lemon yellow button gradient/accent
+$color-yellow-hover: #facc15;
+$color-yellow-shadow: rgba(254, 225, 51, 0.45);
+$color-auth-bg: #f7f8fa; // Crisp light background for auth host
+$color-auth-card: #ffffff; // Elevated white rounded card (`28px`)
+$color-auth-input-bg: #f1f5f9; // Soft rounded light gray inputs
+$color-auth-text: #1e293b; // Deep dark slate text inside light card
+$color-auth-muted: #64748b; // Muted gray for subtitles & labels
+$color-auth-border: #e2e8f0; // Subtle clean border around inputs & dividers

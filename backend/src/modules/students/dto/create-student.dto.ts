@@ -40,4 +40,8 @@ export class CreateStudentDto {
   @IsString()
   @IsOptional()
   branchId?: string;
+
+  @IsString()
+  @IsOptional()
+  status?: string;
 }

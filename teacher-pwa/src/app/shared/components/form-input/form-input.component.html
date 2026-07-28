@@ -1,0 +1,37 @@
+<div class="input-container">
+  @if (label()) {
+    <label [for]="id()" class="input-label">
+      {{ label() }}
+      @if (required()) {
+        <span class="required-star">*</span>
+      }
+    </label>
+  }
+
+  <div class="input-wrapper" [class.has-toggle]="type() === 'password'">
+    <input
+      [type]="currentType"
+      [id]="id()"
+      [name]="name()"
+      [(ngModel)]="value"
+      [placeholder]="placeholder()"
+      [required]="required()"
+      [autocomplete]="autocomplete()"
+      [attr.maxlength]="maxlength()"
+      [attr.inputmode]="inputmode()"
+      [readonly]="readonly()"
+      class="styled-input"
+    />
+
+    @if (type() === 'password') {
+      <button
+        type="button"
+        class="eye-toggle"
+        (click)="togglePasswordVisibility()"
+        aria-label="Toggle visibility"
+      >
+        <span>{{ showPassword() ? '👁️' : '🚫' }}</span>
+      </button>
+    }
+  </div>
+</div>

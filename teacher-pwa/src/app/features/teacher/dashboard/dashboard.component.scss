@@ -1,0 +1,307 @@
+@use '../../../shared/styles/variables' as vars;
+@use '../../../shared/styles/mixins' as mixins;
+
+.dashboard-container {
+  display: flex;
+  flex-direction: column;
+  gap: vars.$space-xl;
+}
+
+/* Welcome Header */
+.welcome-header {
+  @include mixins.flex-between;
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.7) 0%, rgba(15, 23, 42, 0.8) 100%);
+  border: 1px solid vars.$color-border-glass;
+  padding: 1.5rem 1.75rem;
+  border-radius: vars.$radius-lg;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+
+  .welcome-text {
+    h2 {
+      font-size: 1.5rem;
+      font-weight: vars.$weight-bold;
+      color: vars.$color-text-main;
+      margin: 0 0 0.35rem;
+    }
+
+    p {
+      color: vars.$color-text-muted;
+      font-size: 0.9rem;
+      margin: 0;
+    }
+  }
+
+  .refresh-btn {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid vars.$color-border-input;
+    color: #e2e8f0;
+    padding: 0.55rem 0.9rem;
+    border-radius: vars.$radius-sm;
+    font-size: 0.85rem;
+    font-weight: vars.$weight-semibold;
+    cursor: pointer;
+    @include mixins.flex-center;
+    gap: 0.45rem;
+    transition: all 0.2s ease;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.12);
+    }
+  }
+}
+
+/* Stats Grid */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1.25rem;
+}
+
+.stat-card {
+  @include mixins.glass-card(rgba(30, 41, 59, 0.5), 12px, vars.$radius-card);
+  padding: 1.25rem 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1.15rem;
+
+  .stat-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
+    @include mixins.flex-center;
+    font-size: 1.5rem;
+
+    &.purple {
+      background: rgba(168, 85, 247, 0.15);
+      border: 1px solid rgba(168, 85, 247, 0.3);
+    }
+    &.blue {
+      background: rgba(59, 130, 246, 0.15);
+      border: 1px solid rgba(59, 130, 246, 0.3);
+    }
+    &.emerald {
+      background: vars.$status-present-bg;
+      border: 1px solid vars.$status-present-border;
+    }
+  }
+
+  .stat-info {
+    display: flex;
+    flex-direction: column;
+
+    .label {
+      font-size: 0.8rem;
+      color: vars.$color-text-muted;
+      font-weight: vars.$weight-medium;
+    }
+
+    .value {
+      font-size: 1.5rem;
+      font-weight: vars.$weight-bold;
+      color: vars.$color-text-main;
+      margin-top: 0.1rem;
+    }
+  }
+}
+
+/* Section Title */
+.section-title {
+  @include mixins.flex-between;
+
+  h3 {
+    font-size: 1.2rem;
+    font-weight: vars.$weight-bold;
+    color: #f8fafc;
+    margin: 0;
+  }
+
+  .badge {
+    background: vars.$status-homeworked-bg;
+    color: vars.$color-primary-light;
+    padding: 0.25rem 0.65rem;
+    border-radius: vars.$radius-lg;
+    font-size: 0.78rem;
+    font-weight: vars.$weight-semibold;
+  }
+}
+
+/* Classes Grid */
+.classes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.5rem;
+}
+
+.class-card {
+  @include mixins.glass-card(vars.$color-bg-card, 16px, vars.$radius-lg);
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+
+  &:hover {
+    transform: translateY(-4px);
+    border-color: rgba(99, 102, 241, 0.35);
+    box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.5);
+  }
+}
+
+.class-card-header {
+  @include mixins.flex-between;
+  align-items: flex-start;
+
+  .subject-tag {
+    background: vars.$status-homeworked-bg;
+    color: #a5b4fc;
+    font-size: 0.72rem;
+    font-weight: vars.$weight-bold;
+    text-transform: uppercase;
+    padding: 0.2rem 0.55rem;
+    border-radius: 6px;
+    display: inline-block;
+    margin-bottom: 0.45rem;
+  }
+
+  .class-name {
+    font-size: 1.15rem;
+    font-weight: vars.$weight-bold;
+    color: vars.$color-text-main;
+    margin: 0;
+    line-height: 1.3;
+  }
+
+  .room-badge {
+    background: rgba(15, 23, 42, 0.8);
+    border: 1px solid vars.$color-border-glass;
+    color: #cbd5e1;
+    font-size: 0.78rem;
+    font-weight: vars.$weight-semibold;
+    padding: 0.35rem 0.65rem;
+    border-radius: vars.$radius-sm;
+    white-space: nowrap;
+  }
+}
+
+.class-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  font-size: 0.85rem;
+  color: vars.$color-text-muted;
+
+  .meta-row {
+    display: flex;
+    align-items: center;
+    gap: vars.$space-sm;
+  }
+}
+
+/* Enrollment Progress */
+.enrollment-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+
+  .enrollment-labels {
+    @include mixins.flex-between;
+    font-size: 0.8rem;
+    color: vars.$color-text-muted;
+
+    strong {
+      color: #e2e8f0;
+    }
+  }
+
+  .progress-bar {
+    height: 8px;
+    background: rgba(15, 23, 42, 0.8);
+    border-radius: 4px;
+    overflow: hidden;
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, vars.$color-primary 0%, #a855f7 100%);
+      border-radius: 4px;
+      transition: width 0.5s ease;
+    }
+  }
+}
+
+/* Actions Footer */
+.card-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  margin-top: 0.25rem;
+
+  .action-btn {
+    @include mixins.flex-center;
+    padding: 0.7rem;
+    border-radius: vars.$radius-sm;
+    font-size: 0.85rem;
+    font-weight: vars.$weight-semibold;
+    text-decoration: none;
+    transition: all 0.2s ease;
+
+    &.primary {
+      @include mixins.gradient-button(vars.$color-primary, #4f46e5);
+      padding: 0.7rem;
+    }
+
+    &.secondary {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid vars.$color-border-input;
+      color: #e2e8f0;
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.1);
+      }
+    }
+  }
+}
+
+/* Loading & Empty States */
+.loading-state,
+.empty-state {
+  background: rgba(30, 41, 59, 0.35);
+  border: 1px dashed vars.$color-border-input;
+  border-radius: vars.$radius-lg;
+  padding: 3.5rem vars.$space-xl;
+  text-align: center;
+  @include mixins.flex-center;
+  flex-direction: column;
+  gap: vars.$space-md;
+  color: vars.$color-text-muted;
+
+  .spinner {
+    width: 36px;
+    height: 36px;
+    border: 3px solid rgba(255, 255, 255, 0.1);
+    border-top-color: vars.$color-primary;
+    border-radius: vars.$radius-pill;
+    animation: spin 0.8s linear infinite;
+  }
+
+  .empty-icon {
+    font-size: 2.5rem;
+  }
+
+  h4 {
+    color: vars.$color-text-main;
+    font-size: 1.15rem;
+    margin: 0;
+  }
+
+  p {
+    margin: 0;
+    font-size: 0.9rem;
+    max-width: 400px;
+  }
+}
+
+@include mixins.mobile {
+  .welcome-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}

@@ -1,0 +1,219 @@
+<div class="score-container">
+  <!-- Top Header & Class Dropdown -->
+  <div class="page-header">
+    <div class="header-left">
+      <a routerLink="/teacher/dashboard" class="back-link"> <span>⬅️</span> Dashboard </a>
+      <h2>Assessment Score & Grade Recording</h2>
+      <p>Select an assessment item below to input numerical scores & comments.</p>
+    </div>
+
+    <div class="header-controls">
+      <div class="control-group">
+        <label for="classSelect">Class Roster:</label>
+        <select
+          id="classSelect"
+          [ngModel]="selectedClassId()"
+          (ngModelChange)="selectClass($event)"
+          class="class-select"
+        >
+          @for (cls of classes(); track cls.id) {
+            <option [value]="cls.id">{{ cls.name }} ({{ cls.subject }})</option>
+          }
+        </select>
+      </div>
+
+      <button type="button" class="create-btn" (click)="showNewForm.set(!showNewForm())">
+        <span>➕</span> {{ showNewForm() ? 'Cancel New' : 'New Assessment' }}
+      </button>
+    </div>
+  </div>
+
+  <!-- Status / Notification Message -->
+  @if (statusMessage()) {
+    <div
+      class="status-alert"
+      [class.success]="isStatusSuccess()"
+      [class.error]="!isStatusSuccess()"
+      role="alert"
+    >
+      <span>{{ statusMessage() }}</span>
+    </div>
+  }
+
+  <!-- New Assessment Creation Panel -->
+  @if (showNewForm()) {
+    <div class="new-assessment-panel">
+      <h3>Create New Class Assessment</h3>
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="assessTitle">Title / Topic</label>
+          <input
+            type="text"
+            id="assessTitle"
+            [ngModel]="newTitle()"
+            (ngModelChange)="newTitle.set($event)"
+            class="input-field"
+            placeholder="e.g. Unit 3 Quiz"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="assessType">Category Type</label>
+          <select
+            id="assessType"
+            [ngModel]="newType()"
+            (ngModelChange)="newType.set($event)"
+            class="input-field"
+          >
+            <option value="quiz">Quiz</option>
+            <option value="homework">Homework</option>
+            <option value="midterm">Midterm Exam</option>
+            <option value="final">Final Exam</option>
+            <option value="project">Project / Oral</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="maxScore">Max Points</label>
+          <input
+            type="number"
+            id="maxScore"
+            [ngModel]="newMaxScore()"
+            (ngModelChange)="newMaxScore.set($event)"
+            class="input-field"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="weight">Grade Weight (%)</label>
+          <input
+            type="number"
+            id="weight"
+            [ngModel]="newWeight()"
+            (ngModelChange)="newWeight.set($event)"
+            class="input-field"
+          />
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button type="button" class="btn-save-new" (click)="createNewAssessment()">
+          <span>✨ Create & Select Assessment</span>
+        </button>
+      </div>
+    </div>
+  }
+
+  <!-- Assessment Tabs Selector -->
+  <div class="assessments-selector">
+    <span class="selector-label">Active Assessments:</span>
+    <div class="tabs-scroll">
+      @for (assess of assessments(); track assess.id) {
+        <button
+          type="button"
+          class="assess-tab"
+          [class.active]="selectedAssessment()?.id === assess.id"
+          (click)="selectAssessment(assess)"
+        >
+          <span class="type-badge">{{ assess.type | uppercase }}</span>
+          <span class="title">{{ assess.title }}</span>
+          <span class="max">Max: {{ assess.maxScore }} pts</span>
+        </button>
+      }
+    </div>
+  </div>
+
+  <!-- Student Grading Table / Roster Cards -->
+  @if (isLoading()) {
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <p>Loading student scores and grading sheet...</p>
+    </div>
+  } @else if (!selectedAssessment()) {
+    <div class="empty-state">
+      <span>📝</span>
+      <h4>No Assessment Selected</h4>
+      <p>Please select an existing assessment above or create a new one to record grades.</p>
+    </div>
+  } @else {
+    <div class="grading-sheet">
+      <div class="sheet-header">
+        <div class="sheet-info">
+          <h3>{{ selectedAssessment()?.title }}</h3>
+          <span
+            >Max Score: <strong>{{ selectedAssessment()?.maxScore }} pts</strong> • Weight:
+            <strong>{{ selectedAssessment()?.weight }}%</strong></span
+          >
+        </div>
+      </div>
+
+      <div class="roster-grid">
+        @for (student of students(); track student.id; let i = $index) {
+          <div class="student-grade-card">
+            <div class="student-meta">
+              <span class="index">#{{ i + 1 }}</span>
+              <div>
+                <h4 class="khmer-name">{{ student.nameKhmer || student.name }}</h4>
+                <span class="eng-name">{{ student.name }}</span>
+              </div>
+            </div>
+
+            <!-- Score Number Input -->
+            <div class="score-input-section">
+              <label [for]="'score_' + student.id"
+                >Score (Max {{ selectedAssessment()?.maxScore }})</label
+              >
+              <div class="input-wrapper">
+                <input
+                  [id]="'score_' + student.id"
+                  type="number"
+                  [max]="selectedAssessment()?.maxScore || 100"
+                  min="0"
+                  [value]="studentScores()[student.id]"
+                  (input)="updateScore(student.id, $any($event.target).value)"
+                  class="score-input"
+                />
+                <span class="unit">/ {{ selectedAssessment()?.maxScore }}</span>
+              </div>
+            </div>
+
+            <!-- Feedback Comment Input -->
+            <div class="feedback-input-section">
+              <label [for]="'fb_' + student.id">Teacher Comment / Feedback</label>
+              <input
+                [id]="'fb_' + student.id"
+                type="text"
+                [value]="studentFeedback()[student.id] || ''"
+                (input)="updateFeedback(student.id, $any($event.target).value)"
+                class="feedback-input"
+                placeholder="e.g. Excellent pronunciation"
+              />
+            </div>
+          </div>
+        }
+      </div>
+
+      <!-- Submit Footer -->
+      <div class="submit-footer">
+        <div class="summary-text">
+          <span
+            >Grading <strong>{{ students().length }}</strong> students for assessment
+            <strong>{{ selectedAssessment()?.title }}</strong></span
+          >
+        </div>
+        <button
+          type="button"
+          class="submit-btn"
+          [disabled]="isSubmitting()"
+          (click)="submitScores()"
+        >
+          @if (isSubmitting()) {
+            <span class="spinner-small"></span> Saving Scores...
+          } @else {
+            <span>💾 Save Batch Grades</span>
+          }
+        </button>
+      </div>
+    </div>
+  }
+</div>

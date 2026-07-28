@@ -1,0 +1,15 @@
+{
+  "/auth": { "target": "http://localhost:3000", "secure": false, "changeOrigin": true },
+  "/classes": { "target": "http://localhost:3000", "secure": false, "changeOrigin": true },
+  "/users": { "target": "http://localhost:3000", "secure": false, "changeOrigin": true },
+  "/attendance": { "target": "http://localhost:3000", "secure": false, "changeOrigin": true },
+  "/enrollments": { "target": "http://localhost:3000", "secure": false, "changeOrigin": true },
+  "/teachers": { "target": "http://localhost:3000", "secure": false, "changeOrigin": true },
+  "/parents": { "target": "http://localhost:3000", "secure": false, "changeOrigin": true },
+  "/students": { "target": "http://localhost:3000", "secure": false, "changeOrigin": true },
+  "/payments": { "target": "http://localhost:3000", "secure": false, "changeOrigin": true },
+  "/announcements": { "target": "http://localhost:3000", "secure": false, "changeOrigin": true },
+  "/notifications": { "target": "http://localhost:3000", "secure": false, "changeOrigin": true },
+  "/branches": { "target": "http://localhost:3000", "secure": false, "changeOrigin": true },
+  "/audit-logs": { "target": "http://localhost:3000", "secure": false, "changeOrigin": true }
+}

@@ -1,0 +1,11 @@
+@if (message() && isVisible()) {
+  <div class="alert-box alert-{{ type() }}" role="alert">
+    <span class="alert-icon">{{ getIcon() }}</span>
+    <span class="alert-text">{{ message() }}</span>
+    @if (dismissible()) {
+      <button type="button" class="alert-close-btn" (click)="close()" aria-label="Close alert">
+        ×
+      </button>
+    }
+  </div>
+}

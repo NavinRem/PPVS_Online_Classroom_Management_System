@@ -103,7 +103,6 @@ export class PaymentsService extends FirestoreBaseService<CreateInvoiceDto> {
       }
 
       if (checkoutDto.paymentMethod === 'qr_code') {
-        // Return simulated KHQR / PromptPay QR payload
         return {
           invoiceId: checkoutDto.invoiceId,
           paymentMethod: 'qr_code',
@@ -121,7 +120,6 @@ export class PaymentsService extends FirestoreBaseService<CreateInvoiceDto> {
           message: 'Redirecting to online checkout.',
         };
       } else {
-        // Mock instant transaction token
         return {
           invoiceId: checkoutDto.invoiceId,
           paymentMethod: 'mock',
@@ -154,7 +152,6 @@ export class PaymentsService extends FirestoreBaseService<CreateInvoiceDto> {
 
       const invoiceData = invoiceDoc.data() as any;
 
-      // Log transaction
       const txRef = await this.firebase.firestore
         .collection('payment_transactions')
         .add({

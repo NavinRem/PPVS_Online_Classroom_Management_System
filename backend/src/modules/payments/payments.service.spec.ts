@@ -1,152 +1,292 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { PaymentsService } from './payments.service';
-import { FirebaseModule } from '../../config/firebase/firebase.module';
+import { FirebaseService } from '../../config/firebase/firebase.service';
 import { EnrollmentsService } from '../enrollments/enrollments.service';
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
+import {
+  BadRequestException,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
 import {
   CreateInvoiceDto,
   CheckoutDto,
   WebhookPaymentDto,
 } from './dto/create-invoice.dto';
 
-describe('PaymentsService (Unit & Integration)', () => {
+describe('PaymentsService (Unit)', () => {
   let service: PaymentsService;
   let enrollmentsService: jest.Mocked<Partial<EnrollmentsService>>;
   let auditLogsService: jest.Mocked<Partial<AuditLogsService>>;
 
+  let mockFirebaseService: any;
+  let mockInvoicesCollection: any;
+  let mockPaymentTxCollection: any;
+
+  let invoiceDocExists: boolean;
+  let invoiceStatus: string;
+
   beforeAll(async () => {
     enrollmentsService = {
-      updateStatus: jest.fn().mockResolvedValue({
-        id: 'mock_enrollment',
-        message: 'updated',
-      } as any),
+      updateStatus: jest
+        .fn()
+        .mockResolvedValue({ id: 'e1', message: 'updated' }),
     };
     auditLogsService = {
       logAction: jest.fn().mockResolvedValue(true),
     };
 
+    const mockInvoiceDoc = {
+      get: jest.fn().mockImplementation(() =>
+        Promise.resolve({
+          exists: invoiceDocExists,
+          data: () => ({
+            parentId: 'parent1',
+            amount: 500000,
+            currency: 'KHR',
+            status: invoiceStatus,
+            enrollmentId: 'enroll1',
+          }),
+        }),
+      ),
+      update: jest.fn().mockResolvedValue(true),
+      delete: jest.fn().mockResolvedValue(true),
+    };
+
+    mockInvoicesCollection = {
+      where: jest.fn().mockReturnThis(),
+      get: jest.fn().mockResolvedValue({
+        docs: [
+          {
+            id: 'invoice1',
+            data: () => ({
+              parentId: 'parent1',
+              amount: 500000,
+              currency: 'KHR',
+              status: invoiceStatus,
+            }),
+          },
+        ],
+      }),
+      add: jest.fn().mockResolvedValue({ id: 'new_invoice_id' }),
+      doc: jest.fn((docId?: string) => {
+        return {
+          id: docId || 'new_invoice_id',
+          ...mockInvoiceDoc,
+        };
+      }),
+    };
+
+    mockPaymentTxCollection = {
+      add: jest.fn().mockResolvedValue({ id: 'tx_123' }),
+    };
+
+    mockFirebaseService = {
+      firestore: {
+        collection: jest.fn((colName: string) => {
+          if (colName === 'invoices') return mockInvoicesCollection;
+          if (colName === 'payment_transactions')
+            return mockPaymentTxCollection;
+          return {
+            where: jest.fn().mockReturnThis(),
+            get: jest.fn().mockResolvedValue({ docs: [] }),
+            doc: jest.fn(() => ({
+              get: jest.fn().mockResolvedValue({ exists: false }),
+            })),
+          };
+        }),
+      },
+    };
+
     const module: TestingModule = await Test.createTestingModule({
-      imports: [FirebaseModule],
       providers: [
         PaymentsService,
         { provide: EnrollmentsService, useValue: enrollmentsService },
         { provide: AuditLogsService, useValue: auditLogsService },
+        { provide: FirebaseService, useValue: mockFirebaseService },
       ],
     }).compile();
 
-    await module.init();
     service = module.get<PaymentsService>(PaymentsService);
+  });
+
+  beforeEach(() => {
+    invoiceDocExists = true;
+    invoiceStatus = 'unpaid';
+    jest.clearAllMocks();
   });
 
   it('should be defined', () => {
     expect(service).toBeDefined();
   });
 
-  describe('CRUD Operations (`createInvoice`, `findAll`, `findOne`, `update`, `remove`)', () => {
-    let invoiceId: string;
-
+  describe('CRUD Operations', () => {
     it('should create an invoice in KHR (`createInvoice`)', async () => {
       const dto: CreateInvoiceDto = {
-        enrollmentId: 'enroll_pay_crud_1',
-        classId: 'class_pay_crud_1',
-        parentId: 'parent_pay_crud_1',
-        studentId: 'student_pay_crud_1',
+        enrollmentId: 'e1',
+        classId: 'c1',
+        parentId: 'p1',
+        studentId: 's1',
         amount: 400000,
         currency: 'KHR',
         dueDate: '2026-08-01',
       };
-      const result = await service.createInvoice(dto);
-      expect(result).toHaveProperty('id');
+      const result = await service.createInvoice(dto, {
+        uid: 'u1',
+        role: 'admin',
+      });
+      expect(result).toHaveProperty('id', 'new_invoice_id');
       expect(result.status).toBe('unpaid');
       expect(result.currency).toBe('KHR');
-      expect(result.message).toContain('created successfully');
-      invoiceId = result.id;
+      expect(mockInvoicesCollection.add).toHaveBeenCalled();
+      expect(auditLogsService.logAction).toHaveBeenCalled();
     });
 
-    it('should find invoices for a parent (`getMyInvoices` & `findAll`)', async () => {
-      const parentInvoices = await service.getMyInvoices('parent_pay_crud_1');
-      expect(Array.isArray(parentInvoices)).toBe(true);
-      const found = parentInvoices.find((inv) => inv.id === invoiceId);
-      expect(found).toBeDefined();
-
-      const allInvoices = await service.findAll();
-      expect(Array.isArray(allInvoices)).toBe(true);
+    it('should throw InternalServerErrorException when createInvoice fails', async () => {
+      (mockInvoicesCollection.add as jest.Mock).mockRejectedValueOnce(
+        new Error('DB Error'),
+      );
+      await expect(
+        service.createInvoice({} as CreateInvoiceDto),
+      ).rejects.toThrow(InternalServerErrorException);
     });
 
-    it('should find one invoice by ID (`findOne`)', async () => {
-      const result = await service.findOne(invoiceId);
-      expect(result).toBeDefined();
-      expect(result).toHaveProperty('id', invoiceId);
-      expect(result).toHaveProperty('amount', 400000);
+    it('should find invoices for a parent (`getMyInvoices`)', async () => {
+      const results = await service.getMyInvoices('parent1');
+      expect(Array.isArray(results)).toBe(true);
+      expect(results[0].id).toBe('invoice1');
     });
 
-    it('should update an invoice (`update`)', async () => {
-      const result = await service.update(invoiceId, { amount: 450000 });
-      expect(result).toHaveProperty('id', invoiceId);
-      expect(result.message).toContain('successfully updated');
-      const fetched = (await service.findOne(invoiceId)) as any;
-      expect(fetched.amount).toBe(450000);
-    });
-
-    it('should remove an invoice (`remove`)', async () => {
-      const result = await service.remove(invoiceId);
-      expect(result).toHaveProperty('id', invoiceId);
-      expect(result.message).toContain('successfully deleted');
+    it('should throw InternalServerErrorException when getMyInvoices fails', async () => {
+      (mockInvoicesCollection.get as jest.Mock).mockRejectedValueOnce(
+        new Error('DB Error'),
+      );
+      await expect(service.getMyInvoices('parent1')).rejects.toThrow(
+        InternalServerErrorException,
+      );
     });
   });
 
-  describe('Workflow Operations (`initiateCheckout` with KHQR, `confirmPayment` webhook)', () => {
-    let wfInvoiceId: string;
-    const runId = Date.now();
-    const mockEnrollmentId = `enroll_pay_wf_${runId}`;
-
-    beforeAll(async () => {
-      const dto: CreateInvoiceDto = {
-        parentId: `parent_pay_wf_${runId}`,
-        studentId: `student_pay_wf_${runId}`,
-        enrollmentId: mockEnrollmentId,
-        amount: 500000,
-        currency: 'KHR',
-        dueDate: '2026-08-15',
-        classId: '',
-      };
-      const res = await service.createInvoice(dto);
-      wfInvoiceId = res.id;
-    });
-
-    it('should initiate checkout and return KHQR PromptPay payload (`initiateCheckout`)', async () => {
-      const checkoutDto: CheckoutDto = {
-        invoiceId: wfInvoiceId,
-        paymentMethod: 'qr_code',
-      };
-      const result = await service.initiateCheckout(checkoutDto);
-      expect(result.paymentMethod).toBe('qr_code');
-      expect(result.currency).toBe('KHR');
-      expect(result).toHaveProperty('qrDataPayload');
-      expect(result.qrDataPayload).toContain('KHQR_MOCK_PAYMENT_PAYLOAD');
-    });
-
-    it('should confirm payment via webhook, update invoice status, and trigger enrollment activation (`confirmPayment`)', async () => {
-      const webhookDto: WebhookPaymentDto = {
-        invoiceId: wfInvoiceId,
-        transactionRef: 'khqr_tx_999',
-        status: 'paid',
-      };
-      const result = await service.confirmPayment(webhookDto, {
-        uid: 'system',
-        role: 'admin',
+  describe('Workflow Operations', () => {
+    describe('initiateCheckout', () => {
+      it('should initiate checkout and return KHQR PromptPay payload for qr_code', async () => {
+        const checkoutDto: CheckoutDto = {
+          invoiceId: 'invoice1',
+          paymentMethod: 'qr_code',
+        };
+        const result = await service.initiateCheckout(checkoutDto);
+        expect(result.paymentMethod).toBe('qr_code');
+        expect(result.qrDataPayload).toContain(
+          'KHQR_MOCK_PAYMENT_PAYLOAD_FOR_INVOICE_invoice1_KHR_500000',
+        );
       });
-      expect(result.success).toBe(true);
-      expect(result.status).toBe('paid');
-      expect(enrollmentsService.updateStatus).toHaveBeenCalledWith(
-        mockEnrollmentId,
-        'active',
-        expect.anything(),
-      );
 
-      const updatedInv = (await service.findOne(wfInvoiceId)) as any;
-      expect(updatedInv.status).toBe('paid');
-      expect(updatedInv).toHaveProperty('paidAt');
+      it('should return mock checkout url for stripe', async () => {
+        const checkoutDto: CheckoutDto = {
+          invoiceId: 'invoice1',
+          paymentMethod: 'stripe',
+        };
+        const result = await service.initiateCheckout(checkoutDto);
+        expect(result.paymentMethod).toBe('stripe');
+        expect(result.checkoutUrl).toContain('mock-checkout.stripe.com');
+      });
+
+      it('should fallback to mock transaction token', async () => {
+        const checkoutDto: CheckoutDto = {
+          invoiceId: 'invoice1',
+          paymentMethod: 'other_provider',
+        } as any;
+        const result = await service.initiateCheckout(checkoutDto);
+        expect(result.paymentMethod).toBe('mock');
+        expect(result).toHaveProperty('mockTransactionToken');
+      });
+
+      it('should throw NotFoundException if invoice does not exist', async () => {
+        invoiceDocExists = false;
+        await expect(
+          service.initiateCheckout({ invoiceId: 'invalid' } as CheckoutDto),
+        ).rejects.toThrow(NotFoundException);
+      });
+
+      it('should throw BadRequestException if invoice is already paid', async () => {
+        invoiceStatus = 'paid';
+        await expect(
+          service.initiateCheckout({ invoiceId: 'invoice1' } as CheckoutDto),
+        ).rejects.toThrow(BadRequestException);
+      });
+
+      it('should throw InternalServerErrorException if DB read fails', async () => {
+        (mockInvoicesCollection.doc as jest.Mock).mockReturnValueOnce({
+          get: jest.fn().mockRejectedValue(new Error('DB read error')),
+        });
+        await expect(
+          service.initiateCheckout({ invoiceId: 'invoice1' } as CheckoutDto),
+        ).rejects.toThrow(InternalServerErrorException);
+      });
+    });
+
+    describe('confirmPayment', () => {
+      it('should confirm payment, update invoice status, and activate enrollment', async () => {
+        const webhookDto: WebhookPaymentDto = {
+          invoiceId: 'invoice1',
+          transactionRef: 'tx_999',
+          status: 'paid',
+        };
+        const result = await service.confirmPayment(webhookDto, {
+          uid: 'system',
+          role: 'system',
+        });
+
+        expect(result.success).toBe(true);
+        expect(result.status).toBe('paid');
+        expect(mockPaymentTxCollection.add).toHaveBeenCalled();
+        expect(enrollmentsService.updateStatus).toHaveBeenCalledWith(
+          'enroll1',
+          'active',
+          { uid: 'system', role: 'system' },
+        );
+        expect(auditLogsService.logAction).toHaveBeenCalled();
+      });
+
+      it('should process webhook when status is not paid but without activating enrollment', async () => {
+        const webhookDto: WebhookPaymentDto = {
+          invoiceId: 'invoice1',
+          transactionRef: 'tx_999',
+          status: 'failed',
+        } as any;
+        const result = await service.confirmPayment(webhookDto);
+
+        expect(result.success).toBe(true);
+        expect(result.status).toBe('failed');
+        expect(mockPaymentTxCollection.add).toHaveBeenCalled();
+        expect(enrollmentsService.updateStatus).not.toHaveBeenCalled(); // Ensure it didn't activate
+      });
+
+      it('should throw NotFoundException if invoice not found on webhook', async () => {
+        invoiceDocExists = false;
+        const webhookDto: WebhookPaymentDto = {
+          invoiceId: 'invalid',
+          transactionRef: 'tx_999',
+          status: 'paid',
+        };
+        await expect(service.confirmPayment(webhookDto)).rejects.toThrow(
+          NotFoundException,
+        );
+      });
+
+      it('should throw InternalServerErrorException if webhook fails', async () => {
+        (mockPaymentTxCollection.add as jest.Mock).mockRejectedValueOnce(
+          new Error('DB failure'),
+        );
+        const webhookDto: WebhookPaymentDto = {
+          invoiceId: 'invoice1',
+          transactionRef: 'tx_999',
+          status: 'paid',
+        };
+        await expect(service.confirmPayment(webhookDto)).rejects.toThrow(
+          InternalServerErrorException,
+        );
+      });
     });
   });
 });

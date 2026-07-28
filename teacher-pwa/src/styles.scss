@@ -1,0 +1,35 @@
+/* ==========================================================================
+   PPVS Global Application Styles (src/styles.scss)
+   ==========================================================================
+   Imports centralized shared utilities and design tokens across the PWA.
+   ========================================================================== */
+
+@use './app/shared/styles/variables' as vars;
+@use './app/shared/styles/utilities';
+
+* {
+  box-sizing: border-box;
+  font-family: vars.$font-sans;
+}
+
+body,
+html {
+  margin: 0;
+  padding: 0;
+  background-color: vars.$color-bg-app;
+  color: vars.$color-text-main;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Strict Mobile Viewport Enforcer (`mobile-viewport-only`) */
+app-root {
+  display: block;
+  width: 100%;
+  max-width: 430px;
+  margin: 0 auto;
+  min-height: 100dvh;
+  position: relative;
+  overflow-x: hidden;
+  background: vars.$color-bg-app;
+  box-shadow: 0 0 40px rgba(0, 0, 0, 0.15);
+}

@@ -24,4 +24,8 @@ export class CreateUserDto {
   @IsString()
   @IsOptional()
   branchId?: string;
+
+  @IsString()
+  @IsOptional()
+  status?: string;
 }

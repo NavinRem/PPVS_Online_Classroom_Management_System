@@ -1,0 +1,76 @@
+<div class="portal-wrapper">
+  <!-- Offline / Sync Status Banner -->
+  @if (!offlineSync.isOnline() || offlineSync.pendingCount() > 0) {
+    <div class="offline-banner" [class.syncing]="offlineSync.isSyncing()" role="status">
+      <div class="banner-content">
+        @if (!offlineSync.isOnline()) {
+          <span class="icon">📡</span>
+          <span class="text"
+            ><strong>Offline Mode Active.</strong> Changes (`{{ offlineSync.pendingCount() }}`
+            items) will auto-sync when connection returns.</span
+          >
+        } @else if (offlineSync.isSyncing()) {
+          <span class="spinner"></span>
+          <span class="text">Syncing device queue to cloud...</span>
+        } @else {
+          <span class="icon">⚠️</span>
+          <span class="text">`{{ offlineSync.pendingCount() }}` unsynced records in queue.</span>
+          <button type="button" class="sync-btn" (click)="triggerManualSync()">Sync Now</button>
+        }
+      </div>
+    </div>
+  }
+
+  <!-- Top Glassmorphic Navbar -->
+  <header class="portal-header">
+    <div class="header-left">
+      <div class="brand-badge">
+        <span class="brand-icon">🏫</span>
+        <span class="brand-name">PPVS Portal</span>
+      </div>
+      <span class="role-badge">{{ authService.currentUser()?.role | uppercase }}</span>
+    </div>
+
+    <div class="header-right">
+      <div class="branch-badge" title="Active Campus Branch">
+        <span class="branch-icon">📍</span>
+        <span class="branch-code">{{ authService.currentUser()?.branchId || 'PP-MAIN' }}</span>
+      </div>
+
+      <div class="user-profile">
+        <span class="user-name">{{ authService.currentUser()?.name }}</span>
+        <button type="button" class="logout-btn" (click)="logout()" title="Sign Out">
+          <span>🚪</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content Area -->
+  <main class="portal-main">
+    <router-outlet />
+  </main>
+
+  <!-- Mobile / Desktop Bottom Navigation -->
+  <nav class="bottom-nav" aria-label="Portal Navigation">
+    <a routerLink="/teacher/dashboard" routerLinkActive="active" class="nav-item">
+      <span class="nav-icon">📊</span>
+      <span class="nav-label">Dashboard</span>
+    </a>
+
+    <a routerLink="/teacher/attendance" routerLinkActive="active" class="nav-item">
+      <span class="nav-icon">📋</span>
+      <span class="nav-label">Attendance</span>
+    </a>
+
+    <a routerLink="/teacher/assessments" routerLinkActive="active" class="nav-item">
+      <span class="nav-icon">📝</span>
+      <span class="nav-label">Scores</span>
+    </a>
+
+    <button type="button" class="nav-item logout-mobile" (click)="logout()">
+      <span class="nav-icon">🚪</span>
+      <span class="nav-label">Sign Out</span>
+    </button>
+  </nav>
+</div>

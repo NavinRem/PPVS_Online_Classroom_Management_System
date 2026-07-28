@@ -1,4 +1,10 @@
-import { IsString, IsNotEmpty, IsOptional, IsIn } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  IsOptional,
+  IsIn,
+  IsBoolean,
+} from 'class-validator';
 
 export class CreateParentDto {
   @IsString()
@@ -29,4 +35,16 @@ export class CreateParentDto {
   @IsString()
   @IsOptional()
   branchId?: string = '';
+
+  @IsString()
+  @IsOptional()
+  status?: string = '';
+
+  @IsString()
+  @IsOptional()
+  studentLinkCode?: string = '';
+
+  @IsBoolean()
+  @IsOptional()
+  guardianCertified?: boolean = false;
 }

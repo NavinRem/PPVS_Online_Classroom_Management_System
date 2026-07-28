@@ -60,7 +60,6 @@ export class NotificationsService extends FirestoreBaseService<CreateAnnouncemen
 
   async getAnnouncementsByClass(classId: string) {
     try {
-      // Get global or class-specific announcements
       const snapshot = await this.firebase.firestore
         .collection(this.collectionName)
         .get();
@@ -90,7 +89,6 @@ export class NotificationsService extends FirestoreBaseService<CreateAnnouncemen
         .collection('notifications')
         .add(payload);
 
-      // Attempt push notification via FCM if recipient has registered device token
       try {
         const userDoc = await this.firebase.firestore
           .collection('users')

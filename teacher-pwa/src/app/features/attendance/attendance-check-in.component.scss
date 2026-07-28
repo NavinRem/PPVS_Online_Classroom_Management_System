@@ -1,0 +1,302 @@
+@use '../../shared/styles/variables' as vars;
+@use '../../shared/styles/mixins' as mixins;
+
+.attendance-container {
+  display: flex;
+  flex-direction: column;
+  gap: vars.$space-lg;
+}
+
+.page-header {
+  @include mixins.flex-between;
+  @include mixins.glass-card(vars.$color-bg-card, 16px, vars.$radius-lg);
+  padding: vars.$space-lg;
+
+  .header-content {
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      color: vars.$color-primary-light;
+      text-decoration: none;
+      font-size: vars.$size-sm;
+      font-weight: vars.$weight-semibold;
+      margin-bottom: vars.$space-sm;
+
+      &:hover {
+        color: #a5b4fc;
+      }
+    }
+
+    h2 {
+      font-size: vars.$size-xl;
+      font-weight: vars.$weight-bold;
+      color: vars.$color-text-main;
+      margin: 0 0 0.35rem;
+    }
+
+    p {
+      color: vars.$color-text-muted;
+      font-size: vars.$size-sm;
+      margin: 0;
+    }
+  }
+
+  .header-controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: vars.$space-md;
+  }
+}
+
+.control-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+
+  label {
+    font-size: vars.$size-xs;
+    font-weight: vars.$weight-semibold;
+    color: vars.$color-text-muted;
+    text-transform: uppercase;
+  }
+
+  .class-select,
+  .date-select {
+    background: vars.$color-bg-app;
+    border: 1px solid vars.$color-border-input;
+    color: vars.$color-text-main;
+    padding: 0.6rem 0.9rem;
+    border-radius: vars.$radius-sm;
+    font-size: vars.$size-sm;
+    font-weight: vars.$weight-medium;
+    outline: none;
+    transition: border-color 0.2s ease;
+
+    &:focus {
+      border-color: vars.$color-primary;
+    }
+  }
+}
+
+/* Quick Action Bar */
+.quick-actions-bar {
+  background: rgba(30, 41, 59, 0.45);
+  border: 1px solid vars.$color-border-glass;
+  padding: vars.$space-md vars.$space-lg;
+  border-radius: vars.$radius-card;
+  @include mixins.flex-between;
+
+  .summary-counts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: vars.$space-sm;
+
+    .count-pill {
+      font-size: 0.82rem;
+      font-weight: vars.$weight-semibold;
+      padding: 0.35rem 0.75rem;
+      border-radius: vars.$radius-lg;
+      border: 1px solid transparent;
+
+      &.status-present {
+        background: vars.$status-present-bg;
+        color: vars.$status-present-text;
+        border-color: vars.$status-present-border;
+      }
+      &.status-homeworked {
+        background: vars.$status-homeworked-bg;
+        color: vars.$status-homeworked-text;
+        border-color: vars.$status-homeworked-border;
+      }
+      &.status-permission {
+        background: vars.$status-permission-bg;
+        color: vars.$status-permission-text;
+        border-color: vars.$status-permission-border;
+      }
+      &.status-absent {
+        background: vars.$status-absent-bg;
+        color: vars.$status-absent-text;
+        border-color: vars.$status-absent-border;
+      }
+    }
+  }
+
+  .batch-buttons {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: vars.$space-sm;
+    font-size: 0.8rem;
+    color: vars.$color-text-muted;
+
+    .quick-btn {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #e2e8f0;
+      padding: 0.35rem 0.7rem;
+      border-radius: vars.$radius-sm;
+      font-size: 0.78rem;
+      font-weight: vars.$weight-semibold;
+      cursor: pointer;
+      transition: all 0.2s ease;
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.15);
+      }
+    }
+  }
+}
+
+/* Roster List Matrix */
+.roster-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.student-card {
+  @include mixins.glass-card(rgba(30, 41, 59, 0.6), 16px, vars.$radius-card);
+  padding: 1.15rem vars.$space-lg;
+  @include mixins.flex-between;
+}
+
+.student-info {
+  display: flex;
+  align-items: center;
+  gap: vars.$space-md;
+
+  .student-number {
+    width: 32px;
+    height: 32px;
+    background: rgba(255, 255, 255, 0.06);
+    border-radius: vars.$radius-pill;
+    @include mixins.flex-center;
+    font-size: 0.8rem;
+    font-weight: vars.$weight-bold;
+    color: vars.$color-text-muted;
+  }
+
+  .student-names {
+    .name-kh {
+      font-size: vars.$size-lg;
+      font-weight: vars.$weight-bold;
+      color: vars.$color-text-main;
+      margin: 0;
+    }
+
+    .name-en {
+      font-size: 0.82rem;
+      color: vars.$color-text-muted;
+    }
+  }
+}
+
+/* 4-Status Matrix Buttons */
+.status-matrix {
+  display: flex;
+  align-items: center;
+  gap: vars.$space-sm;
+  flex-wrap: wrap;
+
+  .status-btn {
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #cbd5e1;
+    padding: 0.55rem 0.9rem;
+    border-radius: vars.$radius-md;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: vars.$size-sm;
+    font-weight: vars.$weight-semibold;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-width: 110px;
+    justify-content: center;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    &.active {
+      font-weight: vars.$weight-bold;
+      transform: scale(1.03);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+
+      &.status-present {
+        background: vars.$status-present-grad;
+        border-color: vars.$status-present-text;
+        color: vars.$color-text-main;
+      }
+
+      &.status-homeworked {
+        background: vars.$status-homeworked-grad;
+        border-color: vars.$color-primary-light;
+        color: vars.$color-text-main;
+      }
+
+      &.status-permission {
+        background: vars.$status-permission-grad;
+        border-color: vars.$status-permission-text;
+        color: vars.$color-text-main;
+      }
+
+      &.status-absent {
+        background: vars.$status-absent-grad;
+        border-color: vars.$status-absent-text;
+        color: vars.$color-text-main;
+      }
+    }
+  }
+}
+
+/* Submit Footer */
+.submit-footer {
+  position: sticky;
+  bottom: 80px;
+  background: rgba(15, 23, 42, 0.92);
+  backdrop-filter: blur(16px);
+  border: 1px solid vars.$color-border-input;
+  border-radius: vars.$radius-lg;
+  padding: 1.25rem 1.75rem;
+  @include mixins.flex-between;
+  box-shadow: vars.$shadow-header;
+
+  .footer-info {
+    font-size: 0.92rem;
+    color: #cbd5e1;
+
+    strong {
+      color: vars.$color-text-main;
+    }
+  }
+
+  .submit-btn {
+    @include mixins.gradient-button(vars.$color-primary, #4f46e5);
+  }
+}
+
+@include mixins.mobile {
+  .student-card {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .status-matrix {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+
+    .status-btn {
+      min-width: 0;
+    }
+  }
+
+  .submit-footer {
+    flex-direction: column;
+    align-items: stretch;
+    text-align: center;
+  }
+}

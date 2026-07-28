@@ -1,148 +1,277 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { EnrollmentsService } from './enrollments.service';
-import { FirebaseModule } from '../../config/firebase/firebase.module';
-import { BadRequestException } from '@nestjs/common';
+import { FirebaseService } from '../../config/firebase/firebase.service';
+import {
+  BadRequestException,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { CreateEnrollmentDto } from './dto/create-enrollment.dto';
 
-describe('EnrollmentsService (Unit & Integration)', () => {
+describe('EnrollmentsService (Unit)', () => {
   let service: EnrollmentsService;
+  let mockFirebaseService: any;
+  let mockEnrollmentsCollection: any;
+  let mockClassesCollection: any;
+  let mockStudentsCollection: any;
+
+  // Variables for transaction logic tests
+  let classDocExists: boolean;
+  let classDataObj: any;
+  let duplicateCheckEmpty: boolean;
 
   beforeAll(async () => {
+    mockEnrollmentsCollection = {
+      where: jest.fn().mockReturnThis(),
+      get: jest.fn(() => ({
+        empty: duplicateCheckEmpty,
+        docs: duplicateCheckEmpty
+          ? []
+          : [
+              {
+                id: 'enrollment1',
+                data: () => ({
+                  classId: 'class1',
+                  studentId: 'student1',
+                  status: 'active',
+                  createdAt: '2026-07-15',
+                }),
+              },
+            ],
+      })),
+      add: jest.fn().mockResolvedValue({ id: 'new_enrollment_id' }),
+      doc: jest.fn((docId?: string) => {
+        if (
+          !docId ||
+          docId === 'enrollment1' ||
+          docId === 'new_enrollment_id'
+        ) {
+          return {
+            id: docId || 'new_enrollment_id',
+            get: jest.fn().mockResolvedValue({
+              exists: true,
+              id: 'enrollment1',
+              data: () => ({
+                classId: 'class1',
+                studentId: 'student1',
+                status: 'active',
+              }),
+            }),
+            set: jest.fn().mockResolvedValue(true),
+            update: jest.fn().mockResolvedValue(true),
+            delete: jest.fn().mockResolvedValue(true),
+          };
+        }
+        return {
+          get: jest.fn().mockResolvedValue({ exists: false }),
+          delete: jest.fn().mockResolvedValue(true),
+        };
+      }),
+    };
+
+    mockClassesCollection = {
+      doc: jest.fn((docId: string) => {
+        return {
+          id: docId,
+          get: jest.fn().mockResolvedValue({
+            exists: classDocExists,
+            id: docId,
+            data: () => classDataObj,
+          }),
+        };
+      }),
+    };
+
+    mockStudentsCollection = {
+      doc: jest.fn((docId: string) => {
+        return {
+          get: jest.fn().mockResolvedValue({
+            exists: true,
+            id: docId,
+            data: () => ({ firstName: 'Dara', lastName: 'Sok' }),
+          }),
+        };
+      }),
+    };
+
+    const mockTransaction = {
+      get: jest.fn(async (ref: { get: () => Promise<any> }) => await ref.get()),
+      set: jest.fn().mockResolvedValue(true),
+      update: jest.fn().mockResolvedValue(true),
+    };
+
+    mockFirebaseService = {
+      firestore: {
+        runTransaction: jest.fn(async (callback: (tx: any) => Promise<any>) => {
+          return await callback(mockTransaction);
+        }),
+        collection: jest.fn((colName: string) => {
+          if (colName === 'enrollments') return mockEnrollmentsCollection;
+          if (colName === 'classes') return mockClassesCollection;
+          if (colName === 'students') return mockStudentsCollection;
+
+          return {
+            where: jest.fn().mockReturnThis(),
+            get: jest.fn().mockResolvedValue({ docs: [] }),
+            doc: jest.fn(() => ({
+              get: jest.fn().mockResolvedValue({ exists: false }),
+            })),
+          };
+        }),
+      },
+    };
+
     const module: TestingModule = await Test.createTestingModule({
-      imports: [FirebaseModule],
-      providers: [EnrollmentsService],
+      providers: [
+        EnrollmentsService,
+        { provide: FirebaseService, useValue: mockFirebaseService },
+      ],
     }).compile();
 
-    await module.init();
     service = module.get<EnrollmentsService>(EnrollmentsService);
+  });
+
+  beforeEach(() => {
+    // Reset transaction state variables to success defaults
+    classDocExists = true;
+    classDataObj = {
+      currentEnrollment: 5,
+      maxCapacity: 30,
+      price: 200000,
+      className: 'Biology 101',
+      day: 'Monday',
+      time: '10:00 AM',
+    };
+    duplicateCheckEmpty = true;
+    jest.clearAllMocks();
   });
 
   it('should be defined', () => {
     expect(service).toBeDefined();
   });
 
-  describe('CRUD Operations (`create`, `findAll`, `findOne`, `update`, `remove`)', () => {
-    let enrollmentId: string;
-    const testClassId = 'class_enroll_crud_1';
-    const testStudentId = 'student_enroll_crud_1';
-
-    beforeAll(async () => {
-      // Seed target class doc so transaction succeeds
-      await service['firebase'].firestore
-        .collection('classes')
-        .doc(testClassId)
-        .set({
-          className: 'Biology 101',
-          maxCapacity: 30,
-          currentEnrollment: 5,
-          price: 200000,
-          day: 'Monday',
-          time: '10:00 AM',
-        });
-      // Seed student doc for schedule tests
-      await service['firebase'].firestore
-        .collection('students')
-        .doc(testStudentId)
-        .set({
-          firstName: 'Dara',
-          lastName: 'Sok',
-          parentId: 'parent_enroll_crud_1',
-        });
-    });
-
+  describe('CRUD Operations', () => {
     it('should create an enrollment (`create`) inside atomic transaction', async () => {
       const dto: CreateEnrollmentDto = {
-        classId: testClassId,
-        studentId: testStudentId,
-        parentId: 'parent_enroll_crud_1',
+        classId: 'class1',
+        studentId: 'student1',
+        parentId: 'parent1',
       };
+
       const result = await service.create(dto);
+
       expect(result).toHaveProperty('id');
-      expect(result.status).toBe('pending_payment');
+      expect(result.status).toBe('pending_payment'); // because price > 0
       expect(result.message).toContain('successfully enrolled');
-      enrollmentId = result.id;
+      expect(mockFirebaseService.firestore.runTransaction).toHaveBeenCalled();
+    });
+
+    it('should create an enrollment with `active` status if class has no price', async () => {
+      classDataObj = { currentEnrollment: 5, maxCapacity: 30, price: 0 };
+
+      const dto: CreateEnrollmentDto = {
+        classId: 'class1',
+        studentId: 'student1',
+        parentId: 'parent1',
+      };
+
+      const result = await service.create(dto);
+      expect(result.status).toBe('active');
     });
 
     it('should find all enrollments (`findAll`)', async () => {
+      duplicateCheckEmpty = false; // ensures mock returns data
       const results = await service.findAll();
       expect(Array.isArray(results)).toBe(true);
-      const found = results.find((r) => r.id === enrollmentId);
-      expect(found).toBeDefined();
+      expect(results[0].id).toBe('enrollment1');
     });
 
     it('should find one enrollment by ID (`findOne`)', async () => {
-      const result = await service.findOne(enrollmentId);
-      expect(result).toBeDefined();
-      expect(result).toHaveProperty('id', enrollmentId);
-      expect(result).toHaveProperty('classId', testClassId);
+      const result = await service.findOne('enrollment1');
+      expect(result).toHaveProperty('id', 'enrollment1');
+      expect(result).toHaveProperty('classId', 'class1');
     });
 
     it('should update an enrollment status (`update` & `updateStatus`)', async () => {
-      const result = await service.updateStatus(enrollmentId, 'active');
-      expect(result).toHaveProperty('id', enrollmentId);
-      expect(result.message).toContain('successfully updated');
-      const fetched = (await service.findOne(enrollmentId)) as any;
-      expect(fetched.status).toBe('active');
+      const result = await service.updateStatus('enrollment1', 'active');
+      expect(result).toHaveProperty('id', 'enrollment1');
     });
 
     it('should remove an enrollment (`remove`)', async () => {
-      const result = await service.remove(enrollmentId);
-      expect(result).toHaveProperty('id', enrollmentId);
-      expect(result.message).toContain('successfully deleted');
+      const result = await service.remove('enrollment1');
+      expect(result).toHaveProperty('id', 'enrollment1');
     });
   });
 
-  describe('Workflow Operations (`capacity validation`, `duplicate check`, `getMySchedule`)', () => {
-    const runId = Date.now();
-    const fullClassId = `class_full_wf_${runId}`;
-
-    beforeAll(async () => {
-      // Seed full class
-      await service['firebase'].firestore
-        .collection('classes')
-        .doc(fullClassId)
-        .set({
-          className: 'Advanced Physics (Full)',
-          maxCapacity: 10,
-          currentEnrollment: 10,
-          price: 300000,
-        });
+  describe('Workflow Operations', () => {
+    it('should reject enrollment if class does not exist', async () => {
+      classDocExists = false;
+      const dto: CreateEnrollmentDto = {
+        classId: 'classX',
+        studentId: 'student1',
+        parentId: 'parent1',
+      };
+      await expect(service.create(dto)).rejects.toThrow(BadRequestException);
     });
 
     it('should reject enrollment when class is full (`currentEnrollment >= maxCapacity`)', async () => {
+      classDataObj = { currentEnrollment: 30, maxCapacity: 30 }; // Full
       const dto: CreateEnrollmentDto = {
-        classId: fullClassId,
-        studentId: `student_new_${runId}`,
-        parentId: `parent_new_${runId}`,
+        classId: 'class1',
+        studentId: 'student1',
+        parentId: 'parent1',
       };
       await expect(service.create(dto)).rejects.toThrow(BadRequestException);
     });
 
     it('should reject duplicate enrollment when student is already registered in class', async () => {
-      const classId = `class_dup_wf_${runId}`;
-      const studentId = `student_dup_${runId}`;
-      await service['firebase'].firestore
-        .collection('classes')
-        .doc(classId)
-        .set({
-          className: 'Chemistry 101',
-          maxCapacity: 20,
-          currentEnrollment: 2,
-          price: 150000,
-        });
-
+      duplicateCheckEmpty = false; // Simulate already enrolled
       const dto: CreateEnrollmentDto = {
-        classId,
-        studentId,
-        parentId: `parent_dup_${runId}`,
+        classId: 'class1',
+        studentId: 'student1',
+        parentId: 'parent1',
       };
-      await service.create(dto); // First registration succeeds
-      await expect(service.create(dto)).rejects.toThrow(BadRequestException); // Second throws
+      await expect(service.create(dto)).rejects.toThrow(BadRequestException);
+    });
+
+    it('should throw InternalServerErrorException when transaction throws unknown error', async () => {
+      (
+        mockFirebaseService.firestore.runTransaction as jest.Mock
+      ).mockRejectedValueOnce(new Error('Unknown DB Error'));
+      const dto: CreateEnrollmentDto = {
+        classId: 'class1',
+        studentId: 'student1',
+        parentId: 'parent1',
+      };
+      await expect(service.create(dto)).rejects.toThrow(
+        InternalServerErrorException,
+      );
     });
 
     it('should aggregate schedule across enrolled children (`getMySchedule`)', async () => {
-      const schedule = await service.getMySchedule('parent_enroll_crud_1');
+      // Setup specific mock for getMySchedule where it searches by parentId
+      duplicateCheckEmpty = false; // so enrollmentsSnap has docs
+      const schedule = await service.getMySchedule('parent1');
+
       expect(Array.isArray(schedule)).toBe(true);
+      expect(schedule.length).toBe(1);
+      expect(schedule[0].studentName).toBe('Dara Sok');
+      expect(schedule[0].className).toBe('Biology 101');
+      expect(schedule[0].schedule).toBe('Mondays at 10:00 AM');
+    });
+
+    it('should return empty schedule if no enrollments found', async () => {
+      duplicateCheckEmpty = true;
+      const schedule = await service.getMySchedule('parent1');
+      expect(schedule).toEqual([]);
+    });
+
+    it('should throw InternalServerErrorException when getMySchedule fails', async () => {
+      (mockEnrollmentsCollection.get as jest.Mock).mockRejectedValueOnce(
+        new Error('DB Query Error'),
+      );
+      await expect(service.getMySchedule('parent1')).rejects.toThrow(
+        InternalServerErrorException,
+      );
     });
   });
 });

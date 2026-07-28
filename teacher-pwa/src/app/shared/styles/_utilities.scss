@@ -1,0 +1,129 @@
+/* ==========================================================================
+   PPVS Global Reusable Utilities (_utilities.scss)
+   ==========================================================================
+   Global utility classes available across the entire PWA.
+   ========================================================================== */
+
+@use './variables' as vars;
+@use './mixins' as mixins;
+
+// 1. Shared Glass Card Shell
+.glass-container {
+  @include mixins.glass-card;
+  padding: vars.$space-lg;
+}
+
+// 2. Shared Buttons
+.btn-primary-shared {
+  @include mixins.gradient-button(#6366f1, #4f46e5);
+}
+
+.btn-success-shared {
+  @include mixins.gradient-button(#10b981, #059669);
+}
+
+// 3. Shared Status Pills (Referenced by name across views)
+.status-badge-present {
+  @include mixins.status-badge(
+    vars.$status-present-bg,
+    vars.$status-present-text,
+    vars.$status-present-border
+  );
+}
+
+.status-badge-homeworked {
+  @include mixins.status-badge(
+    vars.$status-homeworked-bg,
+    vars.$status-homeworked-text,
+    vars.$status-homeworked-border
+  );
+}
+
+.status-badge-permission {
+  @include mixins.status-badge(
+    vars.$status-permission-bg,
+    vars.$status-permission-text,
+    vars.$status-permission-border
+  );
+}
+
+.status-badge-absent {
+  @include mixins.status-badge(
+    vars.$status-absent-bg,
+    vars.$status-absent-text,
+    vars.$status-absent-border
+  );
+}
+
+// 4. Centralized Spinner Utilities
+.spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(30, 41, 59, 0.25);
+  border-top-color: #1e293b;
+  border-radius: vars.$radius-pill;
+  animation: spin 0.8s linear infinite;
+  display: inline-block;
+}
+
+.spinner-small {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #ffffff;
+  border-radius: vars.$radius-pill;
+  animation: spin 0.8s linear infinite;
+  display: inline-block;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+// 5. Centralized Status Alert Utility (.status-alert)
+.status-alert {
+  padding: vars.$space-md vars.$space-lg;
+  border-radius: vars.$radius-md;
+  font-size: vars.$size-sm;
+  font-weight: vars.$weight-semibold;
+  display: flex;
+  align-items: center;
+  gap: vars.$space-sm;
+  line-height: 1.4;
+
+  &.success {
+    background: vars.$status-present-bg;
+    border: 1px solid vars.$status-present-border;
+    color: vars.$status-present-text;
+  }
+
+  &.error {
+    background: vars.$status-absent-bg;
+    border: 1px solid vars.$status-absent-border;
+    color: vars.$status-absent-text;
+  }
+
+  &.info {
+    background: vars.$status-permission-bg;
+    border: 1px solid vars.$status-permission-border;
+    color: vars.$status-permission-text;
+  }
+
+  &.warning {
+    background: vars.$status-homeworked-bg;
+    border: 1px solid vars.$status-homeworked-border;
+    color: vars.$status-homeworked-text;
+  }
+}
+
+// 6. Mobile Viewport Shell Enforcer (`mobile-viewport-only`)
+.mobile-viewport-shell {
+  width: 100%;
+  max-width: 430px;
+  margin: 0 auto;
+  position: relative;
+  overflow-x: hidden;
+  min-height: 100dvh;
+}

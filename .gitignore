@@ -1,11 +1,26 @@
 node_modules/
 frontend/node_modules/
 backend/node_modules/
-backend/firebase-service-account.json
-.env
+teacher-pwa/node_modules/
+
+# Build artifacts
 frontend/.angular/
 frontend/dist/
 backend/dist/
+teacher-pwa/.angular/
+teacher-pwa/dist/
+teacher-pwa/.dev-certs/
+
+# Secrets and environment files
+backend/firebase-service-account.json
 backend/.npm/
+.env
+.env.*
+backend/.env*
+frontend/.env*
+teacher-pwa/.env*
+
+# Firebase and logs
 .firebase/
 *.log
+**/*.log

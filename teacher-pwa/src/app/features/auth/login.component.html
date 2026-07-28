@@ -1,0 +1,411 @@
+<div class="auth-wrapper" (keyup)="checkCapsLock($event)">
+  <!-- Brand Header without Lemon Badge -->
+  <div class="brand-header">
+    <div class="brand-title">P P V S</div>
+    <div class="brand-subtitle">Classroom Portal</div>
+  </div>
+
+  <div class="auth-stack">
+    <!-- Main Compact Card -->
+    <div class="auth-card">
+      <!-- Mode Switch Navigation Bar at top of card -->
+      <div class="mode-nav">
+        <button
+          type="button"
+          class="mode-nav-btn"
+          [class.active]="authMode() === 'signin'"
+          (click)="switchMode('signin')"
+        >
+          Log In
+        </button>
+        <button
+          type="button"
+          class="mode-nav-btn"
+          [class.active]="authMode() === 'signup'"
+          (click)="switchMode('signup')"
+        >
+          Register
+        </button>
+      </div>
+
+      <div class="method-tabs">
+        <button
+          type="button"
+          class="method-tab"
+          [class.active]="activeTab() === 'email'"
+          (click)="switchTab('email')"
+        >
+          Email
+        </button>
+        <button
+          type="button"
+          class="method-tab"
+          [class.active]="activeTab() === 'phone'"
+          (click)="switchTab('phone')"
+        >
+          Phone
+        </button>
+      </div>
+
+      <!-- Global Standard Alerts using AlertMessageComponent with Auto-Dismiss (Rule 11) -->
+      <!-- Single Prioritized Alert using AlertMessageComponent with Auto-Dismiss (Rule 11) -->
+      @if (errorMessage()) {
+        <app-alert-message
+          type="error"
+          [message]="errorMessage()"
+          [autoDismissMs]="5000"
+          (dismiss)="errorMessage.set('')"
+        />
+      } @else if (capsLockOn()) {
+        <app-alert-message
+          type="warning"
+          message="Caps Lock is ON — Check input capitalization."
+          [autoDismissMs]="6000"
+        />
+      } @else if (successMessage()) {
+        <app-alert-message
+          type="success"
+          [message]="successMessage()"
+          [autoDismissMs]="5000"
+          (dismiss)="successMessage.set('')"
+        />
+      }
+
+      <!-- Compact Form utilizing FormInputComponent global standard inputs -->
+      <form (ngSubmit)="onSubmit()" class="auth-form">
+        @if (authMode() === 'signup') {
+          <app-form-input
+            id="name"
+            name="name"
+            type="text"
+            placeholder="Full Name..."
+            [required]="true"
+            [(value)]="nameInput"
+          />
+
+          <app-form-input
+            id="linkCode"
+            name="linkCode"
+            type="text"
+            placeholder="🔗 Child Link Code (e.g. STU-2026-001, optional)..."
+            [(value)]="studentLinkCode"
+          />
+        }
+
+        @if (activeTab() === 'email') {
+          <app-form-input
+            id="email"
+            name="email"
+            type="email"
+            [placeholder]="authMode() === 'signin' ? 'Email address...' : 'Valid email address...'"
+            [required]="true"
+            autocomplete="email"
+            [(value)]="emailInput"
+          />
+
+          <app-form-input
+            id="password"
+            name="password"
+            type="password"
+            [placeholder]="authMode() === 'signin' ? 'Password...' : 'Create password...'"
+            [required]="true"
+            autocomplete="current-password"
+            [(value)]="passwordInput"
+          />
+        } @else {
+          <app-form-input
+            id="phone"
+            name="phone"
+            type="tel"
+            placeholder="Phone Number..."
+            [required]="true"
+            autocomplete="tel"
+            [(value)]="phoneInput"
+          />
+
+          <app-form-input
+            id="pin"
+            name="pin"
+            type="password"
+            [placeholder]="
+              authMode() === 'signin' ? '4-digit PIN...' : 'Create 4-digit PIN...'
+            "
+            [required]="true"
+            [(value)]="pinInput"
+          />
+        }
+
+        @if (authMode() === 'signup') {
+          <!-- Compact Streamlined Legal Guardian Certification Row (Parent Only) -->
+          <div class="parent-guardrail-box">
+            <label class="guardian-checkbox">
+              <input
+                type="checkbox"
+                [checked]="guardianCertified()"
+                (change)="toggleGuardianCertification()"
+              />
+              <span class="guardrail-text">
+                I certify I am the adult legal guardian (18+ yrs) of this student.
+              </span>
+            </label>
+          </div>
+        }
+
+        @if (authMode() === 'signin') {
+          <!-- Remember me & Forgot Password -->
+          <div class="form-options">
+            <label class="remember-toggle">
+              <input type="checkbox" [checked]="rememberMe()" (change)="toggleRememberMe()" />
+              <span class="toggle-slider"></span>
+              <span class="toggle-label">Remember</span>
+            </label>
+            <a href="javascript:void(0)" class="forgot-link">Forgot password?</a>
+          </div>
+        }
+
+        <!-- Yellow Pill Submit Button -->
+        <button type="submit" class="yellow-submit-btn" [disabled]="isLoading()">
+          @if (isLoading()) {
+            <span class="spinner"></span> Processing...
+          } @else {
+            <span>{{ authMode() === 'signin' ? 'Log In' : 'Register as Parent' }}</span>
+          }
+        </button>
+      </form>
+
+      <div class="divider">
+        <span>OR</span>
+      </div>
+
+      <!-- Google OAuth SSO Button for both Log In & Register -->
+      <button type="button" class="google-btn" (click)="onGoogleSignIn()" [disabled]="isLoading()">
+        <span class="google-icon">G</span>
+        <span>{{
+          authMode() === 'signin' ? 'Log In with Google' : 'Sign Up with Google (Parent)'
+        }}</span>
+      </button>
+
+      @if (authMode() === 'signup') {
+        <div class="terms-disclaimer">
+          By registering at PPVS Classroom Portal, you agree to the
+          <a href="javascript:void(0)">Terms of Use</a> and
+          <a href="javascript:void(0)">Privacy Policy</a>.
+        </div>
+      }
+    </div>
+  </div>
+
+  <!-- Google Account SSO Selection & Sign-Up Panel (Modal Overlay) -->
+  @if (showGooglePanel()) {
+    <div class="google-panel-backdrop" (click)="closeGooglePanel()">
+      <div class="google-panel-card" (click)="$event.stopPropagation()">
+        <!-- Panel Header -->
+        <div class="google-panel-header">
+          <div class="google-logo-badge">
+            <span class="g-letter">G</span>
+          </div>
+          <div class="header-texts">
+            <h3>
+              {{
+                authMode() === 'signup'
+                  ? 'Sign up with Google Account'
+                  : 'Sign in with Google Account'
+              }}
+            </h3>
+            <p>Select or enter your Google account to access PPVS Classroom Portal</p>
+          </div>
+          <button type="button" class="close-btn" (click)="closeGooglePanel()" title="Close">
+            ×
+          </button>
+        </div>
+
+        @if (errorMessage()) {
+          <app-alert-message
+            type="error"
+            [message]="errorMessage()"
+            [autoDismissMs]="5000"
+            (dismiss)="errorMessage.set('')"
+          />
+        }
+
+        <!-- Mode-Specific Role Choice (if signing up) -->
+        @if (authMode() === 'signup') {
+          <div class="panel-section">
+            <label class="section-label">Account Role</label>
+            <div class="role-selector">
+              <button
+                type="button"
+                class="role-btn"
+                [class.active]="googleAccountRole() === 'parent'"
+                (click)="googleAccountRole.set('parent')"
+              >
+                <span>👪</span> Parent Account
+              </button>
+              <button
+                type="button"
+                class="role-btn"
+                [class.active]="googleAccountRole() === 'student'"
+                (click)="googleAccountRole.set('student')"
+              >
+                <span>🎓</span> Student Account
+              </button>
+            </div>
+          </div>
+        }
+
+        <!-- Google Account Preset Selector -->
+        <div class="panel-section">
+          <label class="section-label">Choose Google Account</label>
+          <div class="accounts-list">
+            @if (authMode() === 'signin' || googleAccountRole() === 'parent') {
+              <div
+                class="account-option"
+                [class.selected]="selectedGooglePreset() === 'parent'"
+                (click)="selectGooglePreset('parent')"
+              >
+                <div class="account-avatar parent-avatar">S</div>
+                <div class="account-info">
+                  <div class="account-name">Sokha Chan (Parent)</div>
+                  <div class="account-email">parent.google&#64;ppvs.edu.kh</div>
+                </div>
+                @if (selectedGooglePreset() === 'parent') {
+                  <span class="checkmark">✓</span>
+                }
+              </div>
+            }
+
+            @if (authMode() === 'signin') {
+              <div
+                class="account-option"
+                [class.selected]="selectedGooglePreset() === 'teacher'"
+                (click)="selectGooglePreset('teacher')"
+              >
+                <div class="account-avatar teacher-avatar">N</div>
+                <div class="account-info">
+                  <div class="account-name">Teacher Navin (Google Verified)</div>
+                  <div class="account-email">navin.teacher&#64;ppvs.edu.kh</div>
+                </div>
+                @if (selectedGooglePreset() === 'teacher') {
+                  <span class="checkmark">✓</span>
+                }
+              </div>
+            }
+
+            @if (authMode() === 'signin' || googleAccountRole() === 'student') {
+              <div
+                class="account-option"
+                [class.selected]="selectedGooglePreset() === 'student'"
+                (click)="selectGooglePreset('student')"
+              >
+                <div class="account-avatar student-avatar">D</div>
+                <div class="account-info">
+                  <div class="account-name">Dara Student (Google Verified)</div>
+                  <div class="account-email">student.google&#64;ppvs.edu.kh</div>
+                </div>
+                @if (selectedGooglePreset() === 'student') {
+                  <span class="checkmark">✓</span>
+                }
+              </div>
+            }
+
+            <!-- Custom Google Account Option -->
+            <div
+              class="account-option"
+              [class.selected]="selectedGooglePreset() === 'custom'"
+              (click)="selectGooglePreset('custom')"
+            >
+              <div class="account-avatar custom-avatar">+</div>
+              <div class="account-info">
+                <div class="account-name">Use another Google Account</div>
+                <div class="account-email">Enter custom Gmail address...</div>
+              </div>
+              @if (selectedGooglePreset() === 'custom') {
+                <span class="checkmark">✓</span>
+              }
+            </div>
+          </div>
+        </div>
+
+        <!-- Custom Account Input Fields -->
+        @if (selectedGooglePreset() === 'custom') {
+          <div class="custom-inputs-box">
+            <app-form-input
+              id="customGoogleEmail"
+              name="customGoogleEmail"
+              type="email"
+              placeholder="Google Email Address (e.g., yourname@gmail.com)..."
+              [required]="true"
+              [(value)]="customGoogleEmail"
+            />
+            @if (authMode() === 'signup') {
+              <app-form-input
+                id="customGoogleName"
+                name="customGoogleName"
+                type="text"
+                placeholder="Full Name (for your Google profile)..."
+                [required]="true"
+                [(value)]="customGoogleName"
+              />
+            }
+          </div>
+        }
+
+        @if (authMode() === 'signup') {
+          <!-- Optional Child Link Code & Guardian Check inside Google Panel -->
+          <div class="signup-extras">
+            @if (googleAccountRole() === 'parent') {
+              <app-form-input
+                id="googleLinkCode"
+                name="googleLinkCode"
+                type="text"
+                placeholder="🔗 Child Link Code (optional, e.g. STU-2026-001)..."
+                [(value)]="studentLinkCode"
+              />
+
+              <div class="parent-guardrail-box">
+                <label class="guardian-checkbox">
+                  <input
+                    type="checkbox"
+                    [checked]="guardianCertified()"
+                    (change)="toggleGuardianCertification()"
+                  />
+                  <span class="guardrail-text">
+                    I certify I am the adult legal guardian (18+ yrs) of this student.
+                  </span>
+                </label>
+              </div>
+            }
+          </div>
+        }
+
+        <!-- Panel Footer Actions -->
+        <div class="panel-actions">
+          <button
+            type="button"
+            class="cancel-btn"
+            (click)="closeGooglePanel()"
+            [disabled]="isLoading()"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            class="yellow-submit-btn complete-btn"
+            (click)="completeGoogleAuth()"
+            [disabled]="isLoading()"
+          >
+            @if (isLoading()) {
+              <span class="spinner"></span> Verifying...
+            } @else {
+              <span>{{
+                authMode() === 'signup'
+                  ? 'Sign-Up'
+                  : 'Continue with Google'
+              }}</span>
+            }
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+</div>

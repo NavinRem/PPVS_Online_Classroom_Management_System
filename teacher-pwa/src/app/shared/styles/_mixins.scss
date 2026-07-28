@@ -1,0 +1,91 @@
+/* ==========================================================================
+   PPVS Shared SCSS Mixins (_mixins.scss)
+   ==========================================================================
+   Reusable layout patterns and visual styles across components.
+   ========================================================================== */
+
+@use './variables' as vars;
+
+// 1. Glassmorphism Card Container
+@mixin glass-card($bg: vars.$color-bg-card, $blur: 16px, $radius: vars.$radius-card) {
+  background: $bg;
+  backdrop-filter: blur($blur);
+  -webkit-backdrop-filter: blur($blur);
+  border: 1px solid vars.$color-border-glass;
+  border-radius: $radius;
+  box-shadow: vars.$shadow-card;
+  transition: all 0.2s ease;
+
+  &:hover {
+    border-color: vars.$color-border-glass-hover;
+  }
+}
+
+// 2. Flexbox Helper: Justified Between
+@mixin flex-between($gap: vars.$space-md) {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $gap;
+  flex-wrap: wrap;
+}
+
+// 3. Flexbox Helper: Centered
+@mixin flex-center($gap: vars.$space-sm) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: $gap;
+}
+
+// 4. Status Badge / Pill Style
+@mixin status-badge($bg, $color, $border) {
+  background: $bg;
+  color: $color;
+  border: 1px solid $border;
+  padding: vars.$space-xs vars.$space-sm;
+  border-radius: vars.$radius-pill;
+  font-size: vars.$size-xs;
+  font-weight: vars.$weight-semibold;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+// 5. Gradient Action Button
+@mixin gradient-button($start: #6366f1, $end: #4f46e5) {
+  background: linear-gradient(135deg, $start 0%, $end 100%);
+  color: vars.$color-text-main;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: vars.$radius-md;
+  font-size: vars.$size-md;
+  font-weight: vars.$weight-bold;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba($start, 0.4);
+  transition: all 0.2s ease;
+
+  &:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba($start, 0.55);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+// 6. Responsive Mobile Breakpoint
+@mixin mobile {
+  @media screen and (max-width: 768px) {
+    @content;
+  }
+}
+
+// 7. Responsive Tablet Breakpoint
+@mixin tablet {
+  @media screen and (max-width: 1024px) {
+    @content;
+  }
+}

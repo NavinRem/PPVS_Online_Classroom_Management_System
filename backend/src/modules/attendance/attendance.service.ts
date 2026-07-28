@@ -34,7 +34,6 @@ export class AttendanceService extends FirestoreBaseService<BatchCheckInDto> {
       );
     }
     try {
-      // Check if attendance already exists for this classId and date
       const existingSnap = await this.firebase.firestore
         .collection(this.collectionName)
         .where('classId', '==', checkInDto.classId)
@@ -140,7 +139,6 @@ export class AttendanceService extends FirestoreBaseService<BatchCheckInDto> {
     requesterUid: string,
     requesterRole: string,
   ) {
-    // Ownership check
     await this.verifyStudentAccess(studentId, requesterUid, requesterRole);
 
     try {

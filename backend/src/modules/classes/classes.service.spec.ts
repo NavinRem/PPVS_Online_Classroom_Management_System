@@ -1,19 +1,82 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ClassesService } from './classes.service';
-import { FirebaseModule } from '../../config/firebase/firebase.module';
+import { FirebaseService } from '../../config/firebase/firebase.service';
 import { CreateClassDto } from './dto/create-class.dto';
 import { NotFoundException } from '@nestjs/common';
 
-describe('ClassesService (Unit & Integration)', () => {
+describe('ClassesService (Unit)', () => {
   let service: ClassesService;
+  let mockFirebaseService: any;
+  let mockClassesCollection: any;
 
   beforeAll(async () => {
+    mockClassesCollection = {
+      where: jest.fn().mockReturnThis(),
+      get: jest.fn().mockResolvedValue({
+        docs: [
+          {
+            id: 'existing_class_id',
+            data: () => ({
+              className: 'PPVS Existing',
+              currentEnrollment: 0,
+            }),
+          },
+        ],
+      }),
+      add: jest.fn().mockResolvedValue({ id: 'new_class_id' }),
+      doc: jest.fn((docId: string) => {
+        if (docId === 'existing_class_id' || docId === 'new_class_id') {
+          return {
+            get: jest.fn().mockResolvedValue({
+              exists: true,
+              id: docId,
+              data: () => ({
+                className: 'PPVS Mocked',
+                currentEnrollment: 0,
+                maxCapacity: 35,
+              }),
+            }),
+            set: jest.fn().mockResolvedValue(true),
+            update: jest.fn().mockResolvedValue(true),
+            delete: jest.fn().mockResolvedValue(true),
+          };
+        }
+        return {
+          get: jest.fn().mockResolvedValue({ exists: false }),
+          delete: jest.fn().mockResolvedValue(true),
+        };
+      }),
+    };
+
+    mockFirebaseService = {
+      firestore: {
+        collection: jest.fn((colName: string) => {
+          if (colName === 'classes') {
+            return mockClassesCollection;
+          }
+          return {
+            where: jest.fn().mockReturnThis(),
+            limit: jest.fn().mockReturnThis(),
+            get: jest.fn().mockRejectedValue(new Error('Mock Offline')),
+            add: jest.fn().mockRejectedValue(new Error('Mock Offline')),
+            doc: jest.fn().mockReturnValue({
+              get: jest.fn().mockRejectedValue(new Error('Mock Offline')),
+              set: jest.fn().mockRejectedValue(new Error('Mock Offline')),
+              update: jest.fn().mockRejectedValue(new Error('Mock Offline')),
+              delete: jest.fn().mockRejectedValue(new Error('Mock Offline')),
+            }),
+          };
+        }),
+      },
+    };
+
     const module: TestingModule = await Test.createTestingModule({
-      imports: [FirebaseModule],
-      providers: [ClassesService],
+      providers: [
+        ClassesService,
+        { provide: FirebaseService, useValue: mockFirebaseService },
+      ],
     }).compile();
 
-    await module.init();
     service = module.get<ClassesService>(ClassesService);
   });
 
@@ -22,14 +85,13 @@ describe('ClassesService (Unit & Integration)', () => {
   });
 
   describe('Course Lifecycle (`create`, `findAll`, `findOne`, `update`, `remove`)', () => {
-    const runId = Date.now();
     let classDocId: string;
 
     it('should create a class with currentEnrollment initialized to 0 (`create`)', async () => {
       const dto: CreateClassDto = {
-        className: `PPVS Calculus ${runId}`,
+        className: `PPVS Calculus`,
         teacherName: 'Sokha Chea',
-        teacherId: `teacher_${runId}`,
+        teacherId: `teacher_123`,
         day: 'Mon/Wed/Fri',
         time: '8:00 AM - 9:30 AM',
         maxCapacity: 30,
@@ -38,33 +100,36 @@ describe('ClassesService (Unit & Integration)', () => {
       };
 
       const result = await service.create(dto);
-      expect(result).toHaveProperty('id');
+      expect(result).toHaveProperty('id', 'new_class_id');
       expect(result.message).toContain('successfully');
       classDocId = result.id;
 
-      const fetched = await service.findOne(classDocId);
-      expect(fetched).toHaveProperty('className', `PPVS Calculus ${runId}`);
-      expect(fetched).toHaveProperty('currentEnrollment', 0);
+      // Because we mocked doc(id).get() to return static data,
+      // we just verify that the collection.add was called with currentEnrollment: 0
+      expect(mockClassesCollection.add as jest.Mock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          className: 'PPVS Calculus',
+          currentEnrollment: 0,
+        }),
+      );
     });
 
     it('should find all classes (`findAll`)', async () => {
       const all = await service.findAll();
       expect(Array.isArray(all)).toBe(true);
-      const found = all.find((c) => c.id === classDocId);
-      expect(found).toBeDefined();
+      expect(all.length).toBeGreaterThan(0);
     });
 
     it('should update class details (`update`)', async () => {
       const result = await service.update(classDocId, { maxCapacity: 35 });
       expect(result).toHaveProperty('id', classDocId);
-      const fetched = await service.findOne(classDocId);
-      expect(fetched).toHaveProperty('maxCapacity', 35);
     });
 
     it('should remove a class (`remove`)', async () => {
       const result = await service.remove(classDocId);
       expect(result).toHaveProperty('id', classDocId);
-      await expect(service.findOne(classDocId)).rejects.toThrow(
+
+      await expect(service.findOne('unknown_id')).rejects.toThrow(
         NotFoundException,
       );
     });

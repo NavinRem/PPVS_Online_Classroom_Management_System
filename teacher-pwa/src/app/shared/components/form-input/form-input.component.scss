@@ -1,0 +1,79 @@
+@use '../../styles/variables' as vars;
+
+.input-container {
+  margin-bottom: 0.65rem;
+  width: 100%;
+}
+
+.input-label {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: vars.$color-auth-text;
+  margin-bottom: 0.3rem;
+  letter-spacing: 0.01em;
+
+  .required-star {
+    color: #ef4444;
+    margin-left: 0.2rem;
+  }
+}
+
+.input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+
+  .styled-input {
+    width: 100%;
+    background: #f8fafc;
+    border: 1px solid vars.$color-auth-border;
+    border-radius: vars.$radius-pill;
+    padding: 0.75rem 1.15rem;
+    font-size: 0.9rem;
+    color: vars.$color-auth-text;
+    outline: none;
+    transition: all 0.2s ease;
+    font-family: inherit;
+
+    &::placeholder {
+      color: vars.$color-auth-muted;
+    }
+
+    &:focus {
+      background: #ffffff;
+      border-color: #fee133;
+      box-shadow: 0 0 0 3px rgba(254, 225, 51, 0.3);
+    }
+
+    &:read-only {
+      background: #f1f5f9;
+      cursor: not-allowed;
+      opacity: 0.85;
+    }
+  }
+
+  &.has-toggle .styled-input {
+    padding-right: 3.25rem;
+  }
+
+  .eye-toggle {
+    position: absolute;
+    right: 1.1rem;
+    background: transparent;
+    border: none;
+    color: vars.$color-auth-muted;
+    cursor: pointer;
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.2rem;
+    transition: transform 0.15s ease;
+
+    &:hover {
+      transform: scale(1.15);
+      color: vars.$color-auth-text;
+    }
+  }
+}

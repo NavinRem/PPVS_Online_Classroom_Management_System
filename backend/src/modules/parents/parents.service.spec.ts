@@ -1,19 +1,39 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ParentsService } from './parents.service';
-import { FirebaseModule } from '../../config/firebase/firebase.module';
+import { FirebaseService } from '../../config/firebase/firebase.service';
 import { CreateParentDto } from './dto/create-parent.dto';
 import { NotFoundException } from '@nestjs/common';
 
-describe('ParentsService (Unit & Integration)', () => {
+const mockQuery = {
+  where: jest.fn().mockReturnThis(),
+  limit: jest.fn().mockReturnThis(),
+  get: jest.fn().mockRejectedValue(new Error('Mock Offline')),
+  add: jest.fn().mockRejectedValue(new Error('Mock Offline')),
+  doc: jest.fn().mockReturnValue({
+    get: jest.fn().mockRejectedValue(new Error('Mock Offline')),
+    set: jest.fn().mockRejectedValue(new Error('Mock Offline')),
+    update: jest.fn().mockRejectedValue(new Error('Mock Offline')),
+    delete: jest.fn().mockRejectedValue(new Error('Mock Offline')),
+  }),
+};
+
+const mockFirebaseService = {
+  firestore: {
+    collection: jest.fn().mockReturnValue(mockQuery),
+  },
+};
+
+describe('ParentsService (Unit)', () => {
   let service: ParentsService;
 
   beforeAll(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      imports: [FirebaseModule],
-      providers: [ParentsService],
+      providers: [
+        ParentsService,
+        { provide: FirebaseService, useValue: mockFirebaseService },
+      ],
     }).compile();
 
-    await module.init();
     service = module.get<ParentsService>(ParentsService);
   });
 
@@ -21,7 +41,7 @@ describe('ParentsService (Unit & Integration)', () => {
     expect(service).toBeDefined();
   });
 
-  describe('Parent Profile & Operations (`createOrUpdateProfile`, `findByUid`, CRUD)', () => {
+  describe('Parent Profile & Operations', () => {
     const runId = Date.now();
     const parentUid = `parent_uid_${runId}`;
 
@@ -34,6 +54,7 @@ describe('ParentsService (Unit & Integration)', () => {
       const result = await service.createOrUpdateProfile(parentUid, dto);
       expect(result).toHaveProperty('id', parentUid);
       expect(result.message).toContain('successfully');
+
       const fetched = await service.findByUid(parentUid);
       expect(fetched).toHaveProperty('fullName', 'Dara Seng');
     });

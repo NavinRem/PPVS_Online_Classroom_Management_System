@@ -1,0 +1,372 @@
+@use '../../../shared/styles/variables' as vars;
+@use '../../../shared/styles/mixins' as mixins;
+
+.score-container {
+  display: flex;
+  flex-direction: column;
+  gap: vars.$space-lg;
+}
+
+.page-header {
+  @include mixins.flex-between;
+  @include mixins.glass-card(vars.$color-bg-card, 16px, vars.$radius-lg);
+  padding: vars.$space-lg;
+
+  .header-left {
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      color: vars.$color-primary-light;
+      text-decoration: none;
+      font-size: vars.$size-sm;
+      font-weight: vars.$weight-semibold;
+      margin-bottom: vars.$space-sm;
+
+      &:hover {
+        color: #a5b4fc;
+      }
+    }
+
+    h2 {
+      font-size: vars.$size-xl;
+      font-weight: vars.$weight-bold;
+      color: vars.$color-text-main;
+      margin: 0 0 0.35rem;
+    }
+
+    p {
+      color: vars.$color-text-muted;
+      font-size: vars.$size-sm;
+      margin: 0;
+    }
+  }
+
+  .header-controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: vars.$space-md;
+  }
+}
+
+.control-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+
+  label {
+    font-size: vars.$size-xs;
+    font-weight: vars.$weight-semibold;
+    color: vars.$color-text-muted;
+    text-transform: uppercase;
+  }
+
+  .class-select {
+    background: vars.$color-bg-app;
+    border: 1px solid vars.$color-border-input;
+    color: vars.$color-text-main;
+    padding: 0.6rem 0.9rem;
+    border-radius: vars.$radius-sm;
+    font-size: vars.$size-sm;
+    font-weight: vars.$weight-medium;
+    outline: none;
+  }
+}
+
+.create-btn {
+  background: rgba(99, 102, 241, 0.2);
+  border: 1px solid rgba(99, 102, 241, 0.4);
+  color: vars.$color-primary-light;
+  padding: 0.6rem 1.1rem;
+  border-radius: vars.$radius-sm;
+  font-size: vars.$size-sm;
+  font-weight: vars.$weight-semibold;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  align-self: flex-end;
+
+  &:hover {
+    background: rgba(99, 102, 241, 0.3);
+  }
+}
+
+/* New Assessment Panel */
+.new-assessment-panel {
+  background: rgba(30, 41, 59, 0.8);
+  border: 1px solid rgba(99, 102, 241, 0.4);
+  padding: vars.$space-lg;
+  border-radius: vars.$radius-card;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+
+  h3 {
+    margin: 0;
+    font-size: vars.$size-lg;
+    color: vars.$color-text-main;
+  }
+
+  .form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: vars.$space-md;
+  }
+
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+
+    label {
+      font-size: 0.8rem;
+      color: vars.$color-text-muted;
+      font-weight: vars.$weight-semibold;
+    }
+
+    .input-field {
+      background: vars.$color-bg-app;
+      border: 1px solid vars.$color-border-input;
+      color: vars.$color-text-main;
+      padding: 0.55rem 0.8rem;
+      border-radius: vars.$radius-sm;
+      font-size: vars.$size-sm;
+    }
+  }
+
+  .form-actions {
+    display: flex;
+    justify-content: flex-end;
+
+    .btn-save-new {
+      @include mixins.gradient-button(vars.$color-primary, #4f46e5);
+      padding: 0.65rem 1.35rem;
+    }
+  }
+}
+
+/* Assessment Tabs Selector */
+.assessments-selector {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+
+  .selector-label {
+    font-size: vars.$size-sm;
+    font-weight: vars.$weight-semibold;
+    color: vars.$color-text-muted;
+  }
+
+  .tabs-scroll {
+    display: flex;
+    gap: 0.85rem;
+    overflow-x: auto;
+    padding-bottom: vars.$space-sm;
+  }
+
+  .assess-tab {
+    background: rgba(30, 41, 59, 0.5);
+    border: 1px solid vars.$color-border-glass;
+    border-radius: 14px;
+    padding: 0.85rem 1.15rem;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.35rem;
+    min-width: 200px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    .type-badge {
+      background: rgba(255, 255, 255, 0.08);
+      color: #cbd5e1;
+      font-size: 0.68rem;
+      font-weight: vars.$weight-bold;
+      padding: 0.15rem 0.5rem;
+      border-radius: 6px;
+    }
+
+    .title {
+      font-size: vars.$size-md;
+      font-weight: vars.$weight-bold;
+      color: vars.$color-text-main;
+    }
+
+    .max {
+      font-size: 0.8rem;
+      color: vars.$color-text-muted;
+    }
+
+    &:hover {
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    &.active {
+      background: rgba(99, 102, 241, 0.18);
+      border-color: vars.$color-primary-light;
+
+      .type-badge {
+        background: vars.$color-primary;
+        color: vars.$color-text-main;
+      }
+    }
+  }
+}
+
+/* Grading Sheet */
+.grading-sheet {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.sheet-header {
+  @include mixins.flex-between;
+
+  .sheet-info {
+    h3 {
+      font-size: 1.2rem;
+      font-weight: vars.$weight-bold;
+      color: vars.$color-text-main;
+      margin: 0 0 0.25rem;
+    }
+
+    span {
+      font-size: 0.88rem;
+      color: vars.$color-text-muted;
+
+      strong {
+        color: #e2e8f0;
+      }
+    }
+  }
+}
+
+.roster-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.student-grade-card {
+  @include mixins.glass-card(rgba(30, 41, 59, 0.6), 16px, vars.$radius-card);
+  padding: 1.25rem vars.$space-lg;
+  display: grid;
+  grid-template-columns: minmax(180px, 2fr) minmax(140px, 1fr) minmax(200px, 3fr);
+  gap: vars.$space-lg;
+  align-items: center;
+
+  .student-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+
+    .index {
+      width: 32px;
+      height: 32px;
+      background: rgba(255, 255, 255, 0.06);
+      border-radius: vars.$radius-pill;
+      @include mixins.flex-center;
+      font-size: 0.8rem;
+      font-weight: vars.$weight-bold;
+      color: vars.$color-text-muted;
+    }
+
+    .khmer-name {
+      font-size: 1.05rem;
+      font-weight: vars.$weight-bold;
+      color: vars.$color-text-main;
+      margin: 0;
+    }
+
+    .eng-name {
+      font-size: 0.82rem;
+      color: vars.$color-text-muted;
+    }
+  }
+
+  .score-input-section,
+  .feedback-input-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+
+    label {
+      font-size: vars.$size-xs;
+      color: vars.$color-text-muted;
+      font-weight: vars.$weight-semibold;
+    }
+  }
+
+  .input-wrapper {
+    display: flex;
+    align-items: center;
+    gap: vars.$space-sm;
+    background: vars.$color-bg-app;
+    border: 1px solid vars.$color-border-input;
+    border-radius: vars.$radius-sm;
+    padding: 0.35rem 0.75rem;
+
+    .score-input {
+      background: none;
+      border: none;
+      color: vars.$color-text-main;
+      font-size: vars.$size-lg;
+      font-weight: vars.$weight-bold;
+      width: 60px;
+      outline: none;
+    }
+
+    .unit {
+      color: vars.$color-text-subtle;
+      font-size: vars.$size-sm;
+      font-weight: vars.$weight-semibold;
+    }
+  }
+
+  .feedback-input {
+    background: vars.$color-bg-app;
+    border: 1px solid vars.$color-border-input;
+    color: vars.$color-text-main;
+    padding: 0.6rem 0.9rem;
+    border-radius: vars.$radius-sm;
+    font-size: 0.88rem;
+    outline: none;
+
+    &:focus {
+      border-color: vars.$color-primary;
+    }
+  }
+}
+
+/* Submit Footer */
+.submit-footer {
+  position: sticky;
+  bottom: 80px;
+  background: rgba(15, 23, 42, 0.92);
+  backdrop-filter: blur(16px);
+  border: 1px solid vars.$color-border-input;
+  border-radius: vars.$radius-lg;
+  padding: 1.25rem 1.75rem;
+  @include mixins.flex-between;
+  box-shadow: vars.$shadow-header;
+
+  .summary-text {
+    font-size: 0.92rem;
+    color: #cbd5e1;
+    strong {
+      color: vars.$color-text-main;
+    }
+  }
+
+  .submit-btn {
+    @include mixins.gradient-button(#10b981, #059669);
+  }
+}
+
+@media screen and (max-width: 900px) {
+  .student-grade-card {
+    grid-template-columns: 1fr;
+    gap: vars.$space-md;
+  }
+}

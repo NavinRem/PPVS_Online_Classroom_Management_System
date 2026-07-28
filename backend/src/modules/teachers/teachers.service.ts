@@ -13,7 +13,6 @@ export class TeachersService extends FirestoreBaseService<CreateTeacherDto> {
 
   async getAssignedClasses(teacherUid: string) {
     try {
-      // Look for classes where teacherId is this teacher's doc ID or UID
       const snapshot = await this.firebase.firestore
         .collection('classes')
         .where('teacherId', '==', teacherUid)

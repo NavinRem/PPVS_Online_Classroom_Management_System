@@ -13,20 +13,12 @@ export class AuditLogsService extends FirestoreBaseService<CreateAuditLogDto> {
 
   async logAction(auditDto: CreateAuditLogDto) {
     try {
-      const docRef = await this.firebase.firestore
-        .collection(this.collectionName)
-        .add({
-          ...auditDto,
-          timestamp: new Date().toISOString(),
-        });
-      return {
-        id: docRef.id,
-        message: 'Audit log entry recorded successfully.',
-      };
+      return await this.create({
+        ...auditDto,
+        timestamp: new Date().toISOString(),
+      } as any);
     } catch (error) {
       console.error('🔥 FIRESTORE ERROR (AuditLogsService):', error);
-      // We don't throw an unhandled exception that stops critical business logic if audit writing fails,
-      // but we log it and return null or rethrow based on severity.
       return null;
     }
   }
